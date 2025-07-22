@@ -1,6 +1,12 @@
 
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+import '../constants/app_colors.dart';
+import '../constants/app_strings.dart';
+import '../widgets/app_logo.dart';
+import '../widgets/custom_text_field.dart';
+import '../widgets/custom_button.dart';
+import '../services/auth_service.dart';
+import '../utils/validators.dart';
 import 'home_screen.dart';
 import 'register_screen.dart';
 
@@ -12,40 +18,191 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
-  final _emailController = TextEditingController();
+  final _formKey = GlobalKey<FormState>();
+  final _nameController = TextEditingController();
   final _passwordController = TextEditingController();
+  final _authService = AuthService();
+  bool _isLoading = false;
+  bool _obscurePassword = true;
 
-  Future<void> login() async {
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _passwordController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _login() async {
+    if (!_formKey.currentState!.validate()) {
+      return;
+    }
+
+    setState(() {
+      _isLoading = true;
+    });
+
     try {
-      await FirebaseAuth.instance.signInWithEmailAndPassword(
-        email: _emailController.text.trim(),
+      await _authService.signInWithEmailAndPassword(
+        email: _nameController.text.trim(),
         password: _passwordController.text.trim(),
       );
-      Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const HomeScreen()));
+      
+      if (mounted) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (_) => const HomeScreen()),
+        );
+      }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Login gagal: \$e')));
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('${AppStrings.loginFailed}: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Login')),
-      body: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          children: [
-            TextField(controller: _emailController, decoration: const InputDecoration(labelText: 'Email')),
-            TextField(controller: _passwordController, obscureText: true, decoration: const InputDecoration(labelText: 'Password')),
-            const SizedBox(height: 20),
-            ElevatedButton(onPressed: login, child: const Text('Login')),
-            TextButton(
-              child: const Text('Belum punya akun? Register'),
-              onPressed: () {
-                Navigator.push(context, MaterialPageRoute(builder: (_) => const RegisterScreen()));
-              },
-            ),
-          ],
+      backgroundColor: AppColors.backgroundColor,
+      body: SafeArea(
+        child: Form(
+          key: _formKey,
+          child: Column(
+            children: [
+              // Top section with green background and logo
+              Expanded(
+                flex: 2,
+                child: Container(
+                  width: double.infinity,
+                  decoration: const BoxDecoration(
+                    color: AppColors.primaryGreen,
+                    borderRadius: BorderRadius.only(
+                      bottomLeft: Radius.circular(60),
+                      bottomRight: Radius.circular(60),
+                    ),
+                  ),
+                  child: const Center(
+                    child: AppLogo(size: 100),
+                  ),
+                ),
+              ),
+              
+              // Bottom section with login form
+              Expanded(
+                flex: 3,
+                child: Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(32),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const SizedBox(height: 20),
+                      
+                      // Login title
+                      Text(
+                        AppStrings.login,
+                        style: TextStyle(
+                          fontSize: 32,
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.primaryGreen,
+                        ),
+                      ),
+                      
+                      const SizedBox(height: 8),
+                      
+                      // Subtitle
+                      Text(
+                        AppStrings.signIn,
+                        style: TextStyle(
+                          fontSize: 16,
+                          color: AppColors.grey,
+                        ),
+                      ),
+                      
+                      const SizedBox(height: 40),
+                      
+                      // Name/Email field
+                      CustomTextField(
+                        label: AppStrings.name,
+                        hintText: 'MYTHIA',
+                        controller: _nameController,
+                        keyboardType: TextInputType.emailAddress,
+                        validator: Validators.validateEmail,
+                      ),
+                      
+                      const SizedBox(height: 24),
+                      
+                      // Password field
+                      CustomTextField(
+                        label: AppStrings.password,
+                        hintText: '******',
+                        controller: _passwordController,
+                        obscureText: _obscurePassword,
+                        validator: Validators.validatePassword,
+                        suffixIcon: IconButton(
+                          icon: Icon(
+                            _obscurePassword
+                                ? Icons.visibility_off
+                                : Icons.visibility,
+                            color: AppColors.grey,
+                          ),
+                          onPressed: () {
+                            setState(() {
+                              _obscurePassword = !_obscurePassword;
+                            });
+                          },
+                        ),
+                      ),
+                      
+                      const SizedBox(height: 40),
+                      
+                      // Login button
+                      CustomButton(
+                        text: AppStrings.logIn,
+                        onPressed: _login,
+                        isLoading: _isLoading,
+                      ),
+                      
+                      const SizedBox(height: 24),
+                      
+                      // Register link
+                      Center(
+                        child: GestureDetector(
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => const RegisterScreen(),
+                              ),
+                            );
+                          },
+                          child: Text(
+                            AppStrings.signupHere,
+                            style: TextStyle(
+                              fontSize: 16,
+                              color: AppColors.primaryGreen,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
