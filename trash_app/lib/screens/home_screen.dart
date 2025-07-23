@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../constants/app_colors.dart';
 import '../services/auth_service.dart';
 import 'login_screen.dart';
+import 'menu_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -291,9 +292,17 @@ class _HomeScreenState extends State<HomeScreen> {
     bool isSelected = selectedBottomIndex == index;
     return GestureDetector(
       onTap: () {
-        setState(() {
-          selectedBottomIndex = index;
-        });
+        if (index == 1) {
+          // Navigate to menu screen when bottom right button is pressed
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const MenuScreen()),
+          );
+        } else {
+          setState(() {
+            selectedBottomIndex = index;
+          });
+        }
       },
       child: Container(
         padding: const EdgeInsets.all(16),
