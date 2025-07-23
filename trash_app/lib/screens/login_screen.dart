@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import '../constants/app_colors.dart';
 import '../constants/app_strings.dart';
@@ -75,6 +74,9 @@ class _LoginScreenState extends State<LoginScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.backgroundColor,
+      // Pastikan resizeToAvoidBottomInset diatur ke true (default)
+      // Ini memungkinkan Scaffold untuk menyesuaikan ukurannya saat keyboard muncul.
+      resizeToAvoidBottomInset: true, 
       body: SafeArea(
         child: Form(
           key: _formKey,
@@ -82,14 +84,14 @@ class _LoginScreenState extends State<LoginScreen> {
             children: [
               // Top section with green background and logo
               Expanded(
-                flex: 2,
+                flex: 1,
                 child: Container(
                   width: double.infinity,
                   decoration: const BoxDecoration(
                     color: AppColors.primaryGreen,
                     borderRadius: BorderRadius.only(
-                      bottomLeft: Radius.circular(60),
-                      bottomRight: Radius.circular(60),
+                      bottomLeft: Radius.circular(40),
+                      bottomRight: Radius.circular(40),
                     ),
                   ),
                   child: const Center(
@@ -101,9 +103,8 @@ class _LoginScreenState extends State<LoginScreen> {
               // Bottom section with login form
               Expanded(
                 flex: 3,
-                child: Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.all(32),
+                child: SingleChildScrollView( // <--- Tambahkan SingleChildScrollView di sini
+                  padding: const EdgeInsets.all(32), // Pindahkan padding ke SingleChildScrollView
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -134,8 +135,8 @@ class _LoginScreenState extends State<LoginScreen> {
                       
                       // Name/Email field
                       CustomTextField(
-                        label: AppStrings.name,
-                        hintText: 'Email',
+                        label: AppStrings.email,
+                        hintText: 'Masukkan Email',
                         controller: _nameController,
                         keyboardType: TextInputType.emailAddress,
                         validator: Validators.validateEmail,
@@ -197,6 +198,9 @@ class _LoginScreenState extends State<LoginScreen> {
                           ),
                         ),
                       ),
+                      // Tambahkan SizedBox di bagian bawah untuk memberikan sedikit ruang ekstra
+                      // agar konten tidak terlalu mepet ke bawah saat digulir
+                      const SizedBox(height: 20), 
                     ],
                   ),
                 ),

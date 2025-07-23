@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import '../constants/app_colors.dart';
 import '../constants/app_strings.dart';
@@ -8,7 +7,7 @@ import '../widgets/custom_button.dart';
 import '../services/auth_service.dart';
 import '../utils/validators.dart';
 import 'home_screen.dart';
-import 'login_screen.dart';
+import 'login_screen.dart'; // Pastikan ini mengarah ke LoginScreen yang benar
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -87,6 +86,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.backgroundColor,
+      resizeToAvoidBottomInset: true, // Pastikan ini true untuk penyesuaian keyboard
       body: SafeArea(
         child: Form(
           key: _formKey,
@@ -94,7 +94,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
             children: [
               // Top section with green background and logo
               Expanded(
-                flex: 1,
+                flex: 1, // Mengurangi flex menjadi 1 (dari 1) untuk memberikan lebih banyak ruang ke bawah
                 child: Container(
                   width: double.infinity,
                   decoration: const BoxDecoration(
@@ -112,13 +112,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
               
               // Bottom section with register form
               Expanded(
-                flex: 4,
+                flex: 4, // Meningkatkan flex menjadi 4 (dari 4) untuk memberikan lebih banyak ruang
                 child: SingleChildScrollView(
                   padding: const EdgeInsets.all(32),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const SizedBox(height: 20),
+                      const SizedBox(height: 10), // Mengurangi tinggi SizedBox sebelum judul
                       
                       // Register title
                       const Text(
@@ -257,6 +257,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           ],
                         ),
                       ),
+                      const SizedBox(height: 20), // Tambahkan ruang di bagian bawah
                     ],
                   ),
                 ),
