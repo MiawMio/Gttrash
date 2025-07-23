@@ -121,7 +121,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       const SizedBox(height: 20),
                       
                       // Register title
-                      Text(
+                      const Text(
                         AppStrings.register,
                         style: TextStyle(
                           fontSize: 32,
@@ -133,7 +133,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       const SizedBox(height: 8),
                       
                       // Subtitle
-                      Text(
+                      const Text(
                         'Create your account',
                         style: TextStyle(
                           fontSize: 16,
@@ -229,7 +229,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Text(
+                            const Text(
                               AppStrings.haveAccount,
                               style: TextStyle(
                                 fontSize: 16,
@@ -245,7 +245,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                   ),
                                 );
                               },
-                              child: Text(
+                              child: const Text(
                                 AppStrings.login,
                                 style: TextStyle(
                                   fontSize: 16,

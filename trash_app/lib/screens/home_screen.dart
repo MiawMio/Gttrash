@@ -82,7 +82,7 @@ class HomeScreen extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
+                  const Text(
                     'Welcome back!',
                     style: TextStyle(
                       fontSize: 24,
@@ -93,13 +93,13 @@ class HomeScreen extends StatelessWidget {
                   const SizedBox(height: 8),
                   Text(
                     user?.email ?? 'User',
-                    style: TextStyle(
+                    style: const TextStyle(
                       fontSize: 16,
                       color: AppColors.grey,
                     ),
                   ),
                   const SizedBox(height: 16),
-                  Text(
+                  const Text(
                     'You have successfully logged in to the application.',
                     style: TextStyle(
                       fontSize: 14,
@@ -122,14 +122,14 @@ class HomeScreen extends StatelessWidget {
                       color: AppColors.primaryGreen.withOpacity(0.1),
                       borderRadius: BorderRadius.circular(12),
                     ),
-                    child: Column(
+                    child: const Column(
                       children: [
                         Icon(
                           Icons.verified_user,
                           size: 32,
                           color: AppColors.primaryGreen,
                         ),
-                        const SizedBox(height: 8),
+                        SizedBox(height: 8),
                         Text(
                           'Verified',
                           style: TextStyle(
@@ -150,14 +150,14 @@ class HomeScreen extends StatelessWidget {
                       color: AppColors.primaryGreen.withOpacity(0.1),
                       borderRadius: BorderRadius.circular(12),
                     ),
-                    child: Column(
+                    child: const Column(
                       children: [
                         Icon(
                           Icons.security,
                           size: 32,
                           color: AppColors.primaryGreen,
                         ),
-                        const SizedBox(height: 8),
+                        SizedBox(height: 8),
                         Text(
                           'Secure',
                           style: TextStyle(

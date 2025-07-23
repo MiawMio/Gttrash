@@ -110,7 +110,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       const SizedBox(height: 20),
                       
                       // Login title
-                      Text(
+                      const Text(
                         AppStrings.login,
                         style: TextStyle(
                           fontSize: 32,
@@ -122,7 +122,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       const SizedBox(height: 8),
                       
                       // Subtitle
-                      Text(
+                      const Text(
                         AppStrings.signIn,
                         style: TextStyle(
                           fontSize: 16,
@@ -135,7 +135,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       // Name/Email field
                       CustomTextField(
                         label: AppStrings.name,
-                        hintText: 'MYTHIA',
+                        hintText: 'Email',
                         controller: _nameController,
                         keyboardType: TextInputType.emailAddress,
                         validator: Validators.validateEmail,
@@ -187,7 +187,7 @@ class _LoginScreenState extends State<LoginScreen> {
                               ),
                             );
                           },
-                          child: Text(
+                          child: const Text(
                             AppStrings.signupHere,
                             style: TextStyle(
                               fontSize: 16,
