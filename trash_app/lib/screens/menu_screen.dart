@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:trash_app/screens/list_sampah_screen.dart';
 import '../constants/app_colors.dart';
 import '../services/auth_service.dart';
 import 'login_screen.dart';
 import 'profile_screen.dart';
-import 'list_sampah_screen.dart';
 
 class MenuScreen extends StatelessWidget {
   const MenuScreen({super.key});
@@ -67,20 +67,12 @@ class MenuScreen extends StatelessWidget {
                     ),
                   ),
                   const Spacer(),
-                  // Logout button
-                  IconButton(
-                    icon: const Icon(
-                      Icons.logout,
-                      color: AppColors.white,
-                    ),
-                    onPressed: () => _logout(context),
-                  ),
                 ],
               ),
             ),
-            
+
             const SizedBox(height: 40),
-            
+
             // Menu Items
             Expanded(
               child: Padding(
@@ -95,15 +87,15 @@ class MenuScreen extends StatelessWidget {
                       backgroundColor: const Color(0xFFE8F5E8),
                       onTap: () {
                         // Navigate to trash list screen
-                        Navigator.push(
+                       Navigator.push(
                           context,
                           MaterialPageRoute(builder: (_) => const ListSampahScreen()),
                         );
                       },
                     ),
-                    
+
                     const SizedBox(height: 20),
-                    
+
                     // Dompetku
                     _buildMenuItem(
                       icon: Icons.account_balance_wallet,
@@ -117,9 +109,9 @@ class MenuScreen extends StatelessWidget {
                         );
                       },
                     ),
-                    
+
                     const SizedBox(height: 20),
-                    
+
                     // Informasi Bank Sampah
                     _buildMenuItem(
                       icon: Icons.info_outline,
@@ -133,9 +125,9 @@ class MenuScreen extends StatelessWidget {
                         );
                       },
                     ),
-                    
+
                     const SizedBox(height: 20),
-                    
+
                     // Profile
                     _buildMenuItem(
                       icon: Icons.person_outline,
@@ -150,7 +142,7 @@ class MenuScreen extends StatelessWidget {
                         );
                       },
                     ),
-                    
+
                     const Spacer(),
                   ],
                 ),

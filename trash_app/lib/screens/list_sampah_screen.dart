@@ -16,33 +16,35 @@ class ListSampahScreen extends StatelessWidget {
               padding: const EdgeInsets.all(20),
               child: Row(
                 children: [
-                  // Logo
+                  // Back button
+                  GestureDetector(
+                    onTap: () => Navigator.pop(context),
+                    child: Container(
+                      width: 40,
+                      height: 40,
+                      decoration: const BoxDecoration(
+                        color: AppColors.white,
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(
+                        Icons.arrow_back,
+                        color: AppColors.primaryGreen,
+                        size: 24,
+                      ),
+                    ),
+                  ),
+                // Logo
                   Container(
-                    width: 50,
-                    height: 50,
+                    width: 60,
+                    height: 40,
                     decoration: const BoxDecoration(
                       color: AppColors.white,
                       shape: BoxShape.circle,
                     ),
-                    child: Stack(
-                      alignment: Alignment.center,
-                      children: [
-                        // Book/leaf icon background
-                        Container(
-                          width: 35,
-                          height: 35,
-                          decoration: BoxDecoration(
-                            color: AppColors.primaryGreen,
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                        ),
-                        // Arrow/leaf symbol
-                        const Icon(
-                          Icons.eco,
-                          color: AppColors.white,
-                          size: 20,
-                        ),
-                      ],
+                    child: const Icon(
+                      Icons.eco,
+                      color: AppColors.primaryGreen,
+                      size: 24,
                     ),
                   ),
                   const SizedBox(width: 15),
