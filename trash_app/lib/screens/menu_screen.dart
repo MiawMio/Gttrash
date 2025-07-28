@@ -3,6 +3,7 @@ import '../constants/app_colors.dart';
 import '../services/auth_service.dart';
 import 'login_screen.dart';
 import 'profile_screen.dart';
+import 'bank_sampah_info_screen.dart';
 
 class MenuScreen extends StatelessWidget {
   const MenuScreen({super.key});
@@ -126,8 +127,9 @@ class MenuScreen extends StatelessWidget {
                       backgroundColor: Colors.lightGreen.shade100,
                       onTap: () {
                         // Navigate to bank info screen
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Informasi Bank Sampah akan segera tersedia')),
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (_) => const BankSampahInfoScreen()),
                         );
                       },
                     ),
