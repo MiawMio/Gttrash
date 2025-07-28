@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../constants/app_colors.dart';
 import '../services/auth_service.dart';
 import 'login_screen.dart';
+import 'profile_screen.dart';
 
 class MenuScreen extends StatelessWidget {
   const MenuScreen({super.key});
@@ -141,8 +142,9 @@ class MenuScreen extends StatelessWidget {
                       backgroundColor: Colors.grey.shade200,
                       onTap: () {
                         // Navigate to profile screen
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Profile akan segera tersedia')),
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (_) => const ProfileScreen()),
                         );
                       },
                     ),
