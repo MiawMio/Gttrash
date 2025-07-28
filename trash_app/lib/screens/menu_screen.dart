@@ -3,6 +3,7 @@ import '../constants/app_colors.dart';
 import '../services/auth_service.dart';
 import 'login_screen.dart';
 import 'profile_screen.dart';
+import 'list_sampah_screen.dart';
 
 class MenuScreen extends StatelessWidget {
   const MenuScreen({super.key});
@@ -94,8 +95,9 @@ class MenuScreen extends StatelessWidget {
                       backgroundColor: const Color(0xFFE8F5E8),
                       onTap: () {
                         // Navigate to trash list screen
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('List Sampah akan segera tersedia')),
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (_) => const ListSampahScreen()),
                         );
                       },
                     ),
