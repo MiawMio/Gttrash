@@ -14,4 +14,6 @@ class AppStrings {
   static const String registerSuccess = 'Register berhasil';
   static const String email = 'Email';
   static const String confirmPassword = 'Konfirmasi Password';
+  static const String signInWithGoogle = 'Masuk dengan Google';
+  static const String googleSignInFailed = 'Login Google gagal';
 }
