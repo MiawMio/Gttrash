@@ -70,6 +70,38 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
+  Future<void> _signInWithGoogle() async {
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      final userCredential = await _authService.signInWithGoogle();
+      
+      if (userCredential != null && mounted) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (_) => const HomeScreen()),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('${AppStrings.googleSignInFailed}: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -173,6 +205,17 @@ class _LoginScreenState extends State<LoginScreen> {
                         text: AppStrings.logIn,
                         onPressed: _login,
                         isLoading: _isLoading,
+                      ),
+                      
+                      const SizedBox(height: 16),
+                      
+                      // Google login button
+                      CustomButton(
+                        text: AppStrings.signInWithGoogle,
+                        onPressed: _signInWithGoogle,
+                        isLoading: _isLoading,
+                        backgroundColor: AppColors.white,
+                        textColor: AppColors.black,
                       ),
                       
                       const SizedBox(height: 24),
