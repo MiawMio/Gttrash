@@ -70,6 +70,38 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
+  Future<void> _loginWithGoogle() async {
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      await _authService.signInWithGoogle();
+      
+      if (mounted) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (_) => const HomeScreen()),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Google sign-in failed: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -173,6 +205,78 @@ class _LoginScreenState extends State<LoginScreen> {
                         text: AppStrings.logIn,
                         onPressed: _login,
                         isLoading: _isLoading,
+                      ),
+                      
+                      const SizedBox(height: 16),
+                      
+                      // OR divider
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Container(
+                              height: 1,
+                              color: AppColors.grey.withOpacity(0.3),
+                            ),
+                          ),
+                          const Padding(
+                            padding: EdgeInsets.symmetric(horizontal: 16),
+                            child: Text(
+                              'OR',
+                              style: TextStyle(
+                                color: AppColors.grey,
+                                fontSize: 14,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ),
+                          Expanded(
+                            child: Container(
+                              height: 1,
+                              color: AppColors.grey.withOpacity(0.3),
+                            ),
+                          ),
+                        ],
+                      ),
+                      
+                      const SizedBox(height: 16),
+                      
+                      // Google Sign-In button
+                      SizedBox(
+                        width: double.infinity,
+                        height: 56,
+                        child: OutlinedButton.icon(
+                          onPressed: _isLoading ? null : _loginWithGoogle,
+                          icon: Image.asset(
+                            'assets/images/google_logo.png',
+                            height: 20,
+                            width: 20,
+                            errorBuilder: (context, error, stackTrace) {
+                              return const Icon(
+                                Icons.login,
+                                size: 20,
+                                color: AppColors.grey,
+                              );
+                            },
+                          ),
+                          label: Text(
+                            _isLoading ? 'Signing in...' : 'Continue with Google',
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                              color: AppColors.black,
+                            ),
+                          ),
+                          style: OutlinedButton.styleFrom(
+                            backgroundColor: AppColors.white,
+                            side: BorderSide(
+                              color: AppColors.grey.withOpacity(0.3),
+                              width: 1,
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                        ),
                       ),
                       
                       const SizedBox(height: 24),
