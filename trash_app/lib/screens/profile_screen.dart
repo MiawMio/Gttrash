@@ -1,10 +1,20 @@
 import 'package:flutter/material.dart';
 import '../constants/app_colors.dart';
 import '../services/auth_service.dart';
+import '../services/profile_service.dart';
 import 'login_screen.dart';
+import 'edit_profile_screen.dart';
+import 'dart:io';
 
-class ProfileScreen extends StatelessWidget {
+class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
+  
+  @override
+  State<ProfileScreen> createState() => _ProfileScreenState();
+}
+
+class _ProfileScreenState extends State<ProfileScreen> {
+  final ProfileService _profileService = ProfileService();
 
   Future<void> _logout(BuildContext context) async {
     try {
@@ -88,34 +98,72 @@ class ProfileScreen extends StatelessWidget {
             
             const SizedBox(height: 60),
             
-            // Profile Image
-            Container(
-              width: 120,
-              height: 120,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                border: Border.all(
-                  color: AppColors.white,
-                  width: 4,
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.2),
-                    blurRadius: 10,
-                    offset: const Offset(0, 5),
+            // Profile Image with real-time updates
+            StreamBuilder<Map<String, dynamic>>(
+              stream: _profileService.getProfileStream(),
+              builder: (context, snapshot) {
+                final profileData = snapshot.data ?? {};
+                final photoUrl = profileData['photoUrl'];
+                
+                return Container(
+                  width: 120,
+                  height: 120,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: AppColors.white,
+                      width: 4,
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.2),
+                        blurRadius: 10,
+                        offset: const Offset(0, 5),
+                      ),
+                    ],
                   ),
-                ],
-              ),
-              child: ClipOval(
-                child: Container(
-                  color: Colors.purple.shade100,
-                  child: const Icon(
-                    Icons.person,
-                    size: 60,
-                    color: Colors.purple,
+                  child: ClipOval(
+                    child: photoUrl != null
+                        ? (photoUrl.startsWith('http')
+                            ? Image.network(
+                                photoUrl,
+                                fit: BoxFit.cover,
+                                errorBuilder: (context, error, stackTrace) {
+                                  return Container(
+                                    color: Colors.purple.shade100,
+                                    child: const Icon(
+                                      Icons.person,
+                                      size: 60,
+                                      color: Colors.purple,
+                                    ),
+                                  );
+                                },
+                              )
+                            : Image.file(
+                                File(photoUrl),
+                                fit: BoxFit.cover,
+                                errorBuilder: (context, error, stackTrace) {
+                                  return Container(
+                                    color: Colors.purple.shade100,
+                                    child: const Icon(
+                                      Icons.person,
+                                      size: 60,
+                                      color: Colors.purple,
+                                    ),
+                                  );
+                                },
+                              ))
+                        : Container(
+                            color: Colors.purple.shade100,
+                            child: const Icon(
+                              Icons.person,
+                              size: 60,
+                              color: Colors.purple,
+                            ),
+                          ),
                   ),
-                ),
-              ),
+                );
+              },
             ),
             
             const SizedBox(height: 80),
@@ -144,8 +192,9 @@ class ProfileScreen extends StatelessWidget {
                       backgroundColor: const Color(0xFFB8E6C1),
                       onTap: () {
                         // Navigate to edit profile screen
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Edit Profile akan segera tersedia')),
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (_) => const EditProfileScreen()),
                         );
                       },
                     ),

@@ -3,6 +3,7 @@ import '../constants/app_colors.dart';
 import '../services/auth_service.dart';
 import 'login_screen.dart';
 import 'profile_screen.dart';
+import 'edit_profile_screen.dart';
 import 'bank_sampah_info_screen.dart';
 import 'waste_list_screen.dart';
 
@@ -139,19 +140,7 @@ class MenuScreen extends StatelessWidget {
                     const SizedBox(height: 20),
                     
                     // Profile
-                    _buildMenuItem(
-                      icon: Icons.person_outline,
-                      iconColor: AppColors.black,
-                      title: 'Profile',
-                      backgroundColor: Colors.grey.shade200,
-                      onTap: () {
-                        // Navigate to profile screen
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(builder: (_) => const ProfileScreen()),
-                        );
-                      },
-                    ),
+                    _buildProfileMenuItem(context),
                     
                     const Spacer(),
                   ],
@@ -196,6 +185,109 @@ class MenuScreen extends StatelessWidget {
                 color: AppColors.primaryGreen,
                 size: 28,
               ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildProfileMenuItem(BuildContext context) {
+    return GestureDetector(
+      onTap: () {
+        // Show options: View Profile or Edit Profile
+        showModalBottomSheet(
+          context: context,
+          backgroundColor: Colors.transparent,
+          builder: (context) => Container(
+            decoration: const BoxDecoration(
+              color: AppColors.white,
+              borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 40,
+                  height: 4,
+                  margin: const EdgeInsets.symmetric(vertical: 12),
+                  decoration: BoxDecoration(
+                    color: AppColors.grey,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+                ListTile(
+                  leading: const Icon(Icons.person, color: AppColors.primaryGreen),
+                  title: const Text('View Profile'),
+                  onTap: () {
+                    Navigator.pop(context);
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => const ProfileScreen()),
+                    );
+                  },
+                ),
+                ListTile(
+                  leading: const Icon(Icons.edit, color: AppColors.primaryGreen),
+                  title: const Text('Edit Profile'),
+                  onTap: () {
+                    Navigator.pop(context);
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => const EditProfileScreen()),
+                    );
+                  },
+                ),
+                const SizedBox(height: 20),
+              ],
+            ),
+          ),
+        );
+      },
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: Colors.grey.shade200,
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.1),
+              blurRadius: 10,
+              offset: const Offset(0, 5),
+            ),
+          ],
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 60,
+              height: 60,
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.8),
+                borderRadius: BorderRadius.circular(15),
+              ),
+              child: const Icon(
+                Icons.person_outline,
+                color: AppColors.black,
+                size: 30,
+              ),
+            ),
+            const SizedBox(width: 20),
+            const Text(
+              'Profile',
+              style: TextStyle(
+                color: AppColors.black,
+                fontSize: 18,
+                fontWeight: FontWeight.w600,
+                height: 1.2,
+              ),
+            ),
+            const Spacer(),
+            const Icon(
+              Icons.arrow_drop_down,
+              color: AppColors.grey,
+              size: 30,
             ),
           ],
         ),
