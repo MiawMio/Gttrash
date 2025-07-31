@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import '../constants/app_colors.dart';
 import '../services/auth_service.dart';
@@ -75,18 +74,11 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                   ),
                   const Spacer(),
-                  // Logout button
-                  IconButton(
-                    icon: const Icon(
-                      Icons.logout,
-                      color: AppColors.white,
-                    ),
-                    onPressed: () => _logout(context),
-                  ),
+                  // Tombol Logout telah dihapus di sini
                 ],
               ),
             ),
-            
+
             // Financial Info Card
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -161,9 +153,9 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               ),
             ),
-            
+
             const SizedBox(height: 20),
-            
+
             // Main content area with chart
             Expanded(
               child: Container(
@@ -188,9 +180,9 @@ class _HomeScreenState extends State<HomeScreen> {
                           _buildPeriodButton('Year'),
                         ],
                       ),
-                      
+
                       const SizedBox(height: 20),
-                      
+
                       // Amount indicators
                       const Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -213,9 +205,9 @@ class _HomeScreenState extends State<HomeScreen> {
                           ),
                         ],
                       ),
-                      
+
                       const SizedBox(height: 20),
-                      
+
                       // Chart area
                       Expanded(
                         child: Container(
@@ -342,7 +334,7 @@ class ChartPainter extends CustomPainter {
     // Draw the line
     final path = Path();
     path.moveTo(points[0].dx, points[0].dy);
-    
+
     for (int i = 1; i < points.length; i++) {
       final previous = points[i - 1];
       final current = points[i];

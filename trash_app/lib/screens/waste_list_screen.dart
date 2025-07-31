@@ -16,6 +16,23 @@ class WasteListScreen extends StatelessWidget {
               padding: const EdgeInsets.all(20),
               child: Row(
                 children: [
+                  // Back button
+                  GestureDetector(
+                    onTap: () => Navigator.pop(context),
+                    child: Container(
+                      width: 55,
+                      height: 40,
+                      decoration: const BoxDecoration(
+                        color: AppColors.white,
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(
+                        Icons.arrow_back,
+                        color: AppColors.primaryGreen,
+                        size: 24,
+                      ),
+                    ),
+                  ),
                   // Logo
                   Container(
                     width: 40,
