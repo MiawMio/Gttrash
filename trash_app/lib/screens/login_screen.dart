@@ -122,7 +122,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   decoration: const BoxDecoration(
                     color: AppColors.primaryGreen,
                     borderRadius: BorderRadius.only(
-                      bottomLeft: Radius.circular(40),
+                      bottomLeft: Radius.circular(300),
                       bottomRight: Radius.circular(40),
                     ),
                   ),
