@@ -96,118 +96,197 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ),
             ),
             
-            const SizedBox(height: 60),
+            const SizedBox(height: 40),
             
-            // Profile Image with real-time updates
-            StreamBuilder<Map<String, dynamic>>(
-              stream: _profileService.getProfileStream(),
-              builder: (context, snapshot) {
-                final profileData = snapshot.data ?? {};
-                final photoUrl = profileData['photoUrl'];
-                
-                return Container(
-                  width: 120,
-                  height: 120,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    border: Border.all(
-                      color: AppColors.white,
-                      width: 4,
+            // Profile Card with real-time updates
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 30),
+              child: StreamBuilder<Map<String, dynamic>>(
+                stream: _profileService.getProfileStream(),
+                builder: (context, snapshot) {
+                  final profileData = snapshot.data ?? {};
+                  final photoUrl = profileData['photoUrl'];
+                  final name = profileData['name'] ?? 'Masukan Nama';
+                  final email = profileData['email'] ?? 'email@example.com';
+                  
+                  return Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(24),
+                    decoration: BoxDecoration(
+                      color: AppColors.white.withOpacity(0.95),
+                      borderRadius: BorderRadius.circular(25),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.15),
+                          blurRadius: 20,
+                          offset: const Offset(0, 8),
+                        ),
+                      ],
                     ),
+                    child: Column(
+                      children: [
+                        // Profile Image
+                        Container(
+                          width: 100,
+                          height: 100,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            border: Border.all(
+                              color: AppColors.primaryGreen,
+                              width: 3,
+                            ),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.2),
+                                blurRadius: 10,
+                                offset: const Offset(0, 5),
+                              ),
+                            ],
+                          ),
+                          child: ClipOval(
+                            child: photoUrl != null
+                                ? (photoUrl.startsWith('http')
+                                    ? Image.network(
+                                        photoUrl,
+                                        fit: BoxFit.cover,
+                                        errorBuilder: (context, error, stackTrace) {
+                                          return Container(
+                                            color: Colors.purple.shade100,
+                                            child: const Icon(
+                                              Icons.person,
+                                              size: 50,
+                                              color: Colors.purple,
+                                            ),
+                                          );
+                                        },
+                                      )
+                                    : Image.file(
+                                        File(photoUrl),
+                                        fit: BoxFit.cover,
+                                        errorBuilder: (context, error, stackTrace) {
+                                          return Container(
+                                            color: Colors.purple.shade100,
+                                            child: const Icon(
+                                              Icons.person,
+                                              size: 50,
+                                              color: Colors.purple,
+                                            ),
+                                          );
+                                        },
+                                      ))
+                                : Container(
+                                    color: Colors.purple.shade100,
+                                    child: const Icon(
+                                      Icons.person,
+                                      size: 50,
+                                      color: Colors.purple,
+                                    ),
+                                  ),
+                          ),
+                        ),
+                        
+                        const SizedBox(height: 16),
+                        
+                        // Name
+                        Text(
+                          name,
+                          style: const TextStyle(
+                            color: AppColors.black,
+                            fontSize: 24,
+                            fontWeight: FontWeight.bold,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                        
+                        const SizedBox(height: 8),
+                        
+                        // Email
+                        Text(
+                          email,
+                          style: TextStyle(
+                            color: AppColors.grey.withOpacity(0.8),
+                            fontSize: 16,
+                            fontWeight: FontWeight.w400,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                        
+                        const SizedBox(height: 20),
+                        
+                        // Edit Button
+                        GestureDetector(
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(builder: (_) => const EditProfileScreen()),
+                            );
+                          },
+                          child: Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFB8E6C1),
+                              borderRadius: BorderRadius.circular(15),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(0.1),
+                                  blurRadius: 8,
+                                  offset: const Offset(0, 3),
+                                ),
+                              ],
+                            ),
+                            child: const Center(
+                              child: Text(
+                                'EDIT',
+                                style: TextStyle(
+                                  color: AppColors.black,
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w600,
+                                  letterSpacing: 1.2,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                },
+              ),
+            ),
+            
+            const SizedBox(height: 30),
+            
+            // Keluar Button
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 60),
+              child: GestureDetector(
+                onTap: () => _logout(context),
+                child: Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFB8E6C1),
+                    borderRadius: BorderRadius.circular(20),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withOpacity(0.2),
+                        color: Colors.black.withOpacity(0.15),
                         blurRadius: 10,
                         offset: const Offset(0, 5),
                       ),
                     ],
                   ),
-                  child: ClipOval(
-                    child: photoUrl != null
-                        ? (photoUrl.startsWith('http')
-                            ? Image.network(
-                                photoUrl,
-                                fit: BoxFit.cover,
-                                errorBuilder: (context, error, stackTrace) {
-                                  return Container(
-                                    color: Colors.purple.shade100,
-                                    child: const Icon(
-                                      Icons.person,
-                                      size: 60,
-                                      color: Colors.purple,
-                                    ),
-                                  );
-                                },
-                              )
-                            : Image.file(
-                                File(photoUrl),
-                                fit: BoxFit.cover,
-                                errorBuilder: (context, error, stackTrace) {
-                                  return Container(
-                                    color: Colors.purple.shade100,
-                                    child: const Icon(
-                                      Icons.person,
-                                      size: 60,
-                                      color: Colors.purple,
-                                    ),
-                                  );
-                                },
-                              ))
-                        : Container(
-                            color: Colors.purple.shade100,
-                            child: const Icon(
-                              Icons.person,
-                              size: 60,
-                              color: Colors.purple,
-                            ),
-                          ),
+                  child: const Center(
+                    child: Text(
+                      'KELUAR',
+                      style: TextStyle(
+                        color: AppColors.black,
+                        fontSize: 18,
+                        fontWeight: FontWeight.w600,
+                        letterSpacing: 1.2,
+                      ),
+                    ),
                   ),
-                );
-              },
-            ),
-            
-            const SizedBox(height: 80),
-            
-            // Action Buttons Container
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 40),
-              child: Container(
-                padding: const EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.9),
-                  borderRadius: BorderRadius.circular(30),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.1),
-                      blurRadius: 15,
-                      offset: const Offset(0, 5),
-                    ),
-                  ],
-                ),
-                child: Column(
-                  children: [
-                    // Edit Button
-                    _buildActionButton(
-                      title: 'EDIT',
-                      backgroundColor: const Color(0xFFB8E6C1),
-                      onTap: () {
-                        // Navigate to edit profile screen
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(builder: (_) => const EditProfileScreen()),
-                        );
-                      },
-                    ),
-                    
-                    const SizedBox(height: 20),
-                    
-                    // Keluar Button
-                    _buildActionButton(
-                      title: 'KELUAR',
-                      backgroundColor: const Color(0xFFB8E6C1),
-                      onTap: () => _logout(context),
-                    ),
-                  ],
                 ),
               ),
             ),
@@ -231,19 +310,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: [
-                         GestureDetector(
-               onTap: () {
-                 Navigator.pop(context);
-               },
-               child: Container(
-                 padding: const EdgeInsets.all(16),
-                 child: const Icon(
-                   Icons.home,
-                   color: AppColors.grey,
-                   size: 28,
-                 ),
-               ),
-             ),
+            GestureDetector(
+              onTap: () {
+                Navigator.pop(context);
+              },
+              child: Container(
+                padding: const EdgeInsets.all(16),
+                child: const Icon(
+                  Icons.home,
+                  color: AppColors.grey,
+                  size: 28,
+                ),
+              ),
+            ),
             Container(
               padding: const EdgeInsets.all(16),
               child: const Icon(
@@ -253,42 +332,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ),
             ),
           ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildActionButton({
-    required String title,
-    required Color backgroundColor,
-    required VoidCallback onTap,
-  }) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        width: double.infinity,
-        padding: const EdgeInsets.symmetric(vertical: 20),
-        decoration: BoxDecoration(
-          color: backgroundColor,
-          borderRadius: BorderRadius.circular(25),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.1),
-              blurRadius: 5,
-              offset: const Offset(0, 2),
-            ),
-          ],
-        ),
-        child: Center(
-          child: Text(
-            title,
-            style: const TextStyle(
-              color: AppColors.black,
-              fontSize: 18,
-              fontWeight: FontWeight.w600,
-              letterSpacing: 1.2,
-            ),
-          ),
         ),
       ),
     );
