@@ -6,6 +6,7 @@ import 'profile_screen.dart';
 import 'edit_profile_screen.dart';
 import 'bank_sampah_info_screen.dart';
 import 'waste_list_screen.dart';
+import 'wallet_screen.dart';
 
 class MenuScreen extends StatelessWidget {
   const MenuScreen({super.key});
@@ -114,8 +115,9 @@ class MenuScreen extends StatelessWidget {
                       backgroundColor: Colors.orange.shade100,
                       onTap: () {
                         // Navigate to wallet screen
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Dompetku akan segera tersedia')),
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (_) => const WalletScreen()),
                         );
                       },
                     ),
