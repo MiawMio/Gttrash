@@ -1,8 +1,115 @@
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+import 'package:trash_app/services/auth_service.dart';
+import 'package:trash_app/models/waste_category.dart';
 import '../constants/app_colors.dart';
 
-class WasteListScreen extends StatelessWidget {
+class WasteListScreen extends StatefulWidget {
   const WasteListScreen({super.key});
+
+  @override
+  State<WasteListScreen> createState() => _WasteListScreenState();
+}
+
+class _WasteListScreenState extends State<WasteListScreen> {
+  late Future<List<WasteCategory>> _wasteCategoriesFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _wasteCategoriesFuture = _fetchWasteCategories();
+  }
+
+  Future<List<WasteCategory>> _fetchWasteCategories() async {
+    final response = await http.get(Uri.parse('https://trash-api-azure.vercel.app/api/waste-categories'));
+
+    if (response.statusCode == 200) {
+      List<dynamic> body = jsonDecode(response.body);
+      return body.map((dynamic item) => WasteCategory.fromJson(item as Map<String, dynamic>)).toList();
+    } else {
+      throw Exception('Failed to load waste categories');
+    }
+  }
+
+  void _showSubmissionDialog(WasteCategory category) {
+    final weightController = TextEditingController();
+    final formKey = GlobalKey<FormState>();
+    final authService = AuthService();
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text('Setor ${category.name}'),
+          content: Form(
+            key: formKey,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('Harga: Rp ${category.pricePerGram.toStringAsFixed(0)} / gram'),
+                const SizedBox(height: 16),
+                TextFormField(
+                  controller: weightController,
+                  keyboardType: TextInputType.number,
+                  decoration: const InputDecoration(
+                    labelText: 'Berat (gram)',
+                    border: OutlineInputBorder(),
+                  ),
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Berat tidak boleh kosong';
+                    }
+                    if (double.tryParse(value) == null) {
+                      return 'Masukkan angka yang valid';
+                    }
+                    return null;
+                  },
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Batal'),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                if (formKey.currentState!.validate()) {
+                  final userId = authService.currentUser?.uid;
+                  if (userId == null) return;
+                  
+                  final response = await http.post(
+                    Uri.parse('https://trash-api-azure.vercel.app/api/submissions'),
+                    headers: {'Content-Type': 'application/json'},
+                    body: jsonEncode({
+                      'userId': userId,
+                      'categoryId': category.id,
+                      'weightInGrams': double.parse(weightController.text),
+                    }),
+                  );
+
+                  Navigator.pop(context); // Close dialog
+
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(response.statusCode == 200
+                          ? 'Pengajuan berhasil!'
+                          : 'Gagal mengajukan.'),
+                      backgroundColor: response.statusCode == 200 ? Colors.green : Colors.red,
+                    ),
+                  );
+                }
+              },
+              child: const Text('Ajukan'),
+            ),
+          ],
+        );
+      },
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -16,143 +123,51 @@ class WasteListScreen extends StatelessWidget {
               padding: const EdgeInsets.all(20),
               child: Row(
                 children: [
-                  // Back button
                   GestureDetector(
                     onTap: () => Navigator.pop(context),
                     child: Container(
-                      width: 55,
+                      width: 40,
                       height: 40,
                       decoration: const BoxDecoration(
                         color: AppColors.white,
                         shape: BoxShape.circle,
                       ),
-                      child: const Icon(
-                        Icons.arrow_back,
-                        color: AppColors.primaryGreen,
-                        size: 24,
-                      ),
-                    ),
-                  ),
-                  // Logo
-                  Container(
-                    width: 40,
-                    height: 40,
-                    decoration: const BoxDecoration(
-                      color: AppColors.white,
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Icon(
-                      Icons.eco,
-                      color: AppColors.primaryGreen,
-                      size: 24,
+                      child: const Icon(Icons.arrow_back, color: AppColors.primaryGreen),
                     ),
                   ),
                   const SizedBox(width: 12),
-                  // Title
-                  const Text(
-                    'List Sampah',
-                    style: TextStyle(
-                      color: AppColors.white,
-                      fontSize: 24,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
+                  const Text('List Sampah', style: TextStyle(color: AppColors.white, fontSize: 24, fontWeight: FontWeight.w600)),
                 ],
               ),
             ),
-            
-            const SizedBox(height: 40),
-            
-            // Waste Items List
             Expanded(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20),
-                child: Column(
-                  children: [
-                    // Plastik
-                    _buildWasteItem(
-                      icon: Icons.local_drink,
-                      iconColor: Colors.blue.shade600,
-                      title: 'Plastik',
-                      price: 'Rp. 1000 Per Gram',
-                      backgroundColor: const Color(0xFFD4E7DD),
-                    ),
-                    
-                    const SizedBox(height: 16),
-                    
-                    // Kertas
-                    _buildWasteItem(
-                      icon: Icons.description,
-                      iconColor: Colors.grey.shade600,
-                      title: 'Kertas',
-                      price: 'Rp. 100 Per Gram',
-                      backgroundColor: const Color(0xFFD4E7DD),
-                    ),
-                    
-                    const SizedBox(height: 16),
-                    
-                    // Kaca
-                    _buildWasteItem(
-                      icon: Icons.broken_image,
-                      iconColor: Colors.cyan.shade600,
-                      title: 'Kaca',
-                      price: 'Rp. 10 Per Gram',
-                      backgroundColor: const Color(0xFFD4E7DD),
-                    ),
-                    
-                    const SizedBox(height: 16),
-                    
-                    // Logam
-                    _buildWasteItem(
-                      icon: Icons.construction,
-                      iconColor: Colors.grey.shade700,
-                      title: 'Logam',
-                      price: 'Rp. 1 Per Gram',
-                      backgroundColor: const Color(0xFFD4E7DD),
-                    ),
-                    
-                    const Spacer(),
-                  ],
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-      bottomNavigationBar: Container(
-        height: 80,
-        decoration: const BoxDecoration(
-          color: AppColors.white,
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black12,
-              blurRadius: 10,
-              offset: Offset(0, -5),
-            ),
-          ],
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceAround,
-          children: [
-            GestureDetector(
-              onTap: () {
-                Navigator.pop(context);
-              },
-              child: Container(
-                padding: const EdgeInsets.all(16),
-                child: const Icon(
-                  Icons.home,
-                  color: AppColors.grey,
-                  size: 28,
-                ),
-              ),
-            ),
-            Container(
-              padding: const EdgeInsets.all(16),
-              child: const Icon(
-                Icons.grid_view,
-                color: AppColors.primaryGreen,
-                size: 28,
+              child: FutureBuilder<List<WasteCategory>>(
+                future: _wasteCategoriesFuture,
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return const Center(child: CircularProgressIndicator(color: Colors.white));
+                  }
+                  if (snapshot.hasError) {
+                    return Center(child: Text('Error: ${snapshot.error}', style: const TextStyle(color: Colors.white)));
+                  }
+                  if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                    return const Center(child: Text('Tidak ada data sampah.', style: TextStyle(color: Colors.white)));
+                  }
+
+                  final categories = snapshot.data!;
+                  return ListView.builder(
+                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+                    itemCount: categories.length,
+                    itemBuilder: (context, index) {
+                      final category = categories[index];
+                      return _buildWasteItem(
+                        category: category,
+                        icon: _getIconForCategory(category.name),
+                        onTap: () => _showSubmissionDialog(category),
+                      );
+                    },
+                  );
+                },
               ),
             ),
           ],
@@ -161,67 +176,45 @@ class WasteListScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildWasteItem({
-    required IconData icon,
-    required Color iconColor,
-    required String title,
-    required String price,
-    required Color backgroundColor,
-  }) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: backgroundColor,
-        borderRadius: BorderRadius.circular(25),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            blurRadius: 8,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 60,
-            height: 60,
-            decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.9),
-              borderRadius: BorderRadius.circular(15),
-            ),
-            child: Icon(
-              icon,
-              color: iconColor,
-              size: 32,
-            ),
-          ),
-          const SizedBox(width: 20),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+  Widget _buildWasteItem({required WasteCategory category, required IconData icon, required VoidCallback onTap}) {
+    return Card(
+      margin: const EdgeInsets.only(bottom: 16),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(20),
+        child: Padding(
+          padding: const EdgeInsets.all(20),
+          child: Row(
             children: [
-              Text(
-                title,
-                style: const TextStyle(
-                  color: AppColors.black,
-                  fontSize: 20,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                price,
-                style: TextStyle(
-                  color: AppColors.black.withOpacity(0.7),
-                  fontSize: 16,
-                  fontWeight: FontWeight.w500,
-                ),
+              Icon(icon, size: 40, color: AppColors.primaryGreen),
+              const SizedBox(width: 20),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(category.name, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+                  Text('Rp ${category.pricePerGram.toStringAsFixed(0)} / gram'),
+                ],
               ),
             ],
           ),
-        ],
+        ),
       ),
     );
+  }
+  
+  IconData _getIconForCategory(String name) {
+    switch (name.toLowerCase()) {
+      case 'plastik':
+        return Icons.local_drink;
+      case 'kertas':
+        return Icons.description;
+      case 'kaca':
+        return Icons.broken_image;
+      case 'logam':
+        return Icons.construction;
+      default:
+        return Icons.recycling;
+    }
   }
 }
