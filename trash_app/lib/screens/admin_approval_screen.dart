@@ -17,8 +17,8 @@ class _AdminApprovalScreenState extends State<AdminApprovalScreen> {
 
   Future<void> _processSubmission(String submissionId, String action) async {
     final String urlPath = action == 'approve'
-        ? 'https://trash-api-azure.vercel.app/api/approve' // <-- URL BARU DAN BERSIH
-        : 'https://trash-api-azure.vercel.app/api/reject'; // <-- URL BARU DAN BERSIH
+        ? 'https://trash-api-azure.vercel.app/api/approve' 
+        : 'https://trash-api-azure.vercel.app/api/reject'; 
     final url = Uri.parse(urlPath);
     
     final bool? confirm = await showDialog<bool>(
