@@ -4,7 +4,7 @@ import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
 import '../constants/app_colors.dart';
 
-// Model untuk data riwayat penyetujuan setoran
+// Model untuk data riwayat penyetujuan (tetap sama)
 class SubmissionHistory {
   final String userName;
   final String categoryName;
@@ -21,11 +21,10 @@ class SubmissionHistory {
   });
 
   factory SubmissionHistory.fromJson(Map<String, dynamic> json) {
-    // Logika ini sudah ada sebelumnya dan seharusnya sudah benar
     DateTime processedAtDate;
     final processedAtData = json['processed_at'];
 
-    if (processedAtData is Map<String, dynamic>) {
+    if (processedAtData is Map<String, dynamic> && processedAtData.containsKey('_seconds')) {
       final seconds = processedAtData['_seconds'] as int;
       processedAtDate = DateTime.fromMillisecondsSinceEpoch(seconds * 1000);
     } else if (processedAtData is String) {
@@ -44,7 +43,7 @@ class SubmissionHistory {
   }
 }
 
-// Model untuk data riwayat penarikan dana
+// Model untuk data riwayat penarikan (tetap sama)
 class WithdrawalHistory {
   final String userName;
   final double amount;
@@ -58,20 +57,16 @@ class WithdrawalHistory {
     required this.processedAt,
   });
 
-  // <<< KODE YANG DIPERBAIKI ADA DI SINI >>>
   factory WithdrawalHistory.fromJson(Map<String, dynamic> json) {
     DateTime processedAtDate;
     final processedAtData = json['processed_at'];
 
     if (processedAtData is Map<String, dynamic> && processedAtData.containsKey('_seconds')) {
-      // Jika data adalah Map dari Firestore Timestamp, konversi dari seconds
       final seconds = processedAtData['_seconds'] as int;
       processedAtDate = DateTime.fromMillisecondsSinceEpoch(seconds * 1000);
     } else if (processedAtData is String) {
-      // Jika data adalah String (untuk jaga-jaga)
       processedAtDate = DateTime.parse(processedAtData);
     } else {
-      // Fallback jika data tidak ada atau formatnya tidak dikenal
       processedAtDate = DateTime.now();
     }
 
@@ -79,11 +74,10 @@ class WithdrawalHistory {
       userName: json['user_name'] ?? 'Unknown User',
       amount: (json['amount'] as num).toDouble(),
       status: json['status'] ?? 'unknown',
-      processedAt: processedAtDate.toLocal(), // Konversi ke waktu lokal perangkat
+      processedAt: processedAtDate.toLocal(),
     );
   }
 }
-
 
 class AdminHistoryScreen extends StatefulWidget {
   const AdminHistoryScreen({super.key});
@@ -94,15 +88,22 @@ class AdminHistoryScreen extends StatefulWidget {
 
 class _AdminHistoryScreenState extends State<AdminHistoryScreen> with SingleTickerProviderStateMixin {
   late TabController _tabController;
-  late Future<List<SubmissionHistory>> _submissionHistoryFuture;
-  late Future<List<WithdrawalHistory>> _withdrawalHistoryFuture;
+
+  bool _isLoadingSubmissions = true;
+  bool _isLoadingWithdrawals = true;
+  List<SubmissionHistory> _submissionHistory = [];
+  List<WithdrawalHistory> _withdrawalHistory = [];
+  int _submissionCurrentPage = 1;
+  int _withdrawalCurrentPage = 1;
+  int _submissionTotalPages = 1;
+  int _withdrawalTotalPages = 1;
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
-    _submissionHistoryFuture = _fetchSubmissionHistory();
-    _withdrawalHistoryFuture = _fetchWithdrawalHistory();
+    _fetchSubmissionHistory(1);
+    _fetchWithdrawalHistory(1);
   }
 
   @override
@@ -111,32 +112,62 @@ class _AdminHistoryScreenState extends State<AdminHistoryScreen> with SingleTick
     super.dispose();
   }
 
-  // Fungsi untuk mengambil riwayat setoran
-  Future<List<SubmissionHistory>> _fetchSubmissionHistory() async {
-    final response = await http.get(Uri.parse('https://trash-api-azure.vercel.app/api/history'));
-    if (response.statusCode == 200) {
-      List<dynamic> body = jsonDecode(response.body);
-      return body.map((dynamic item) => SubmissionHistory.fromJson(item as Map<String, dynamic>)).toList();
-    } else {
-      throw Exception('Failed to load submission history');
+  Future<void> _fetchSubmissionHistory(int page) async {
+    setState(() {
+      _isLoadingSubmissions = true;
+    });
+    try {
+      final response = await http.get(Uri.parse('https://trash-api-azure.vercel.app/api/history?page=$page&limit=8'));
+      if (response.statusCode == 200) {
+        final body = jsonDecode(response.body);
+        final List<dynamic> data = body['data'];
+        setState(() {
+          _submissionHistory = data.map((item) => SubmissionHistory.fromJson(item)).toList();
+          _submissionTotalPages = body['totalPages'];
+          _submissionCurrentPage = body['currentPage'];
+        });
+      } else {
+        throw Exception('Failed to load submission history');
+      }
+    } finally {
+      if(mounted) {
+        setState(() {
+          _isLoadingSubmissions = false;
+        });
+      }
     }
   }
 
-  // Fungsi untuk mengambil riwayat penarikan
-  Future<List<WithdrawalHistory>> _fetchWithdrawalHistory() async {
-    final response = await http.get(Uri.parse('https://trash-api-azure.vercel.app/api/withdrawal-history'));
-    if (response.statusCode == 200) {
-      List<dynamic> body = jsonDecode(response.body);
-      return body.map((dynamic item) => WithdrawalHistory.fromJson(item as Map<String, dynamic>)).toList();
-    } else {
-      throw Exception('Failed to load withdrawal history');
+  Future<void> _fetchWithdrawalHistory(int page) async {
+    setState(() {
+      _isLoadingWithdrawals = true;
+    });
+    try {
+      final response = await http.get(Uri.parse('https://trash-api-azure.vercel.app/api/withdrawal-history?page=$page&limit=8'));
+      if (response.statusCode == 200) {
+        final body = jsonDecode(response.body);
+        final List<dynamic> data = body['data'];
+        setState(() {
+          _withdrawalHistory = data.map((item) => WithdrawalHistory.fromJson(item)).toList();
+          _withdrawalTotalPages = body['totalPages'];
+          _withdrawalCurrentPage = body['currentPage'];
+        });
+      } else {
+        throw Exception('Failed to load withdrawal history');
+      }
+    } finally {
+      if(mounted) {
+        setState(() {
+          _isLoadingWithdrawals = false;
+        });
+      }
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.primaryGreen,
+      backgroundColor: Colors.grey[200],
       appBar: AppBar(
         backgroundColor: Colors.white,
         leading: GestureDetector(
@@ -165,101 +196,131 @@ class _AdminHistoryScreenState extends State<AdminHistoryScreen> with SingleTick
     );
   }
 
-  // Widget untuk menampilkan daftar riwayat penyetujuan
+  // <<< KODE YANG DIPERBAIKI ADA DI SINI >>>
   Widget _buildSubmissionHistoryList() {
-    return FutureBuilder<List<SubmissionHistory>>(
-      future: _submissionHistoryFuture,
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(child: CircularProgressIndicator());
-        }
-        if (snapshot.hasError) {
-          return Center(child: Text('Error: ${snapshot.error}'));
-        }
-        if (!snapshot.hasData || snapshot.data!.isEmpty) {
-          return const Center(child: Text('Belum ada riwayat penyetujuan.'));
-        }
+    if (_isLoadingSubmissions) {
+      return const Center(child: CircularProgressIndicator());
+    }
+    if (_submissionHistory.isEmpty) {
+      return const Center(child: Text('Belum ada riwayat penyetujuan.'));
+    }
 
-        final historyList = snapshot.data!;
-        return ListView.builder(
-          padding: const EdgeInsets.all(10),
-          itemCount: historyList.length,
-          itemBuilder: (context, index) {
-            final item = historyList[index];
-            final isApproved = item.status == 'approved';
-            final formattedDate = DateFormat('dd MMM yyyy, HH:mm').format(item.processedAt);
-            
-            return Card(
-              margin: const EdgeInsets.symmetric(vertical: 8),
-              child: ListTile(
-                leading: Icon(
-                  isApproved ? Icons.check_circle : Icons.cancel,
-                  color: isApproved ? Colors.green : Colors.red,
-                ),
-                title: Text('${item.userName} - ${item.categoryName}'),
-                subtitle: Text('${item.weight} gram - ${formattedDate}'),
-                trailing: Text(
-                  isApproved ? 'Disetujui' : 'Ditolak',
-                  style: TextStyle(
+    return Column(
+      children: [
+        Expanded(
+          child: ListView.builder(
+            padding: const EdgeInsets.all(10),
+            itemCount: _submissionHistory.length,
+            itemBuilder: (context, index) {
+              final item = _submissionHistory[index];
+              final isApproved = item.status == 'approved';
+              final formattedDate = DateFormat('dd MMM yyyy, HH:mm').format(item.processedAt);
+              
+              // Ini adalah bagian Card yang sebelumnya hilang
+              return Card(
+                margin: const EdgeInsets.symmetric(vertical: 8),
+                child: ListTile(
+                  leading: Icon(
+                    isApproved ? Icons.check_circle : Icons.cancel,
                     color: isApproved ? Colors.green : Colors.red,
-                    fontWeight: FontWeight.bold
+                  ),
+                  title: Text('${item.userName} - ${item.categoryName}'),
+                  subtitle: Text('${item.weight} gram - ${formattedDate}'),
+                  trailing: Text(
+                    isApproved ? 'Disetujui' : 'Ditolak',
+                    style: TextStyle(
+                        color: isApproved ? Colors.green : Colors.red,
+                        fontWeight: FontWeight.bold),
                   ),
                 ),
-              ),
-            );
+              );
+            },
+          ),
+        ),
+        _buildPaginationControls(
+          currentPage: _submissionCurrentPage,
+          totalPages: _submissionTotalPages,
+          onPageChanged: (page) {
+            _fetchSubmissionHistory(page);
           },
-        );
-      },
+        ),
+      ],
+    );
+  }
+  
+  Widget _buildWithdrawalHistoryList() {
+    final currencyFormatter = NumberFormat.currency(locale: 'id_ID', symbol: 'Rp ', decimalDigits: 0);
+    if (_isLoadingWithdrawals) {
+      return const Center(child: CircularProgressIndicator());
+    }
+    if (_withdrawalHistory.isEmpty) {
+      return const Center(child: Text('Belum ada riwayat penarikan.'));
+    }
+    return Column(
+      children: [
+        Expanded(
+          child: ListView.builder(
+            padding: const EdgeInsets.all(10),
+            itemCount: _withdrawalHistory.length,
+            itemBuilder: (context, index) {
+              final item = _withdrawalHistory[index];
+              final isApproved = item.status == 'approved';
+              final formattedDate = DateFormat('dd MMM yyyy, HH:mm').format(item.processedAt);
+              return Card(
+                margin: const EdgeInsets.symmetric(vertical: 8),
+                child: ListTile(
+                  leading: Icon(
+                    isApproved ? Icons.check_circle : Icons.cancel,
+                    color: isApproved ? Colors.green : Colors.red,
+                  ),
+                  title: Text(item.userName),
+                  subtitle: Text('Jumlah: ${currencyFormatter.format(item.amount)}\nPada: $formattedDate'),
+                  trailing: Text(
+                    isApproved ? 'Disetujui' : 'Ditolak',
+                    style: TextStyle(
+                      color: isApproved ? Colors.green : Colors.red,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              );
+            },
+          ),
+        ),
+        _buildPaginationControls(
+          currentPage: _withdrawalCurrentPage,
+          totalPages: _withdrawalTotalPages,
+          onPageChanged: (page) {
+            _fetchWithdrawalHistory(page);
+          },
+        ),
+      ],
     );
   }
 
-  // Widget untuk menampilkan daftar riwayat penarikan
-  Widget _buildWithdrawalHistoryList() {
-    final currencyFormatter = NumberFormat.currency(locale: 'id_ID', symbol: 'Rp ', decimalDigits: 0);
+  Widget _buildPaginationControls({
+    required int currentPage,
+    required int totalPages,
+    required ValueChanged<int> onPageChanged,
+  }) {
+    if (totalPages <= 1) return const SizedBox.shrink();
 
-    return FutureBuilder<List<WithdrawalHistory>>(
-      future: _withdrawalHistoryFuture,
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(child: CircularProgressIndicator());
-        }
-        if (snapshot.hasError) {
-          return Center(child: Text('Error: ${snapshot.error}'));
-        }
-        if (!snapshot.hasData || snapshot.data!.isEmpty) {
-          return const Center(child: Text('Belum ada riwayat penarikan.'));
-        }
-
-        final historyList = snapshot.data!;
-        return ListView.builder(
-          padding: const EdgeInsets.all(10),
-          itemCount: historyList.length,
-          itemBuilder: (context, index) {
-            final item = historyList[index];
-            final isApproved = item.status == 'approved';
-            final formattedDate = DateFormat('dd MMM yyyy, HH:mm').format(item.processedAt);
-            
-            return Card(
-              margin: const EdgeInsets.symmetric(vertical: 8),
-              child: ListTile(
-                leading: Icon(
-                  isApproved ? Icons.check_circle : Icons.cancel,
-                  color: isApproved ? Colors.green : Colors.red,
-                ),
-                title: Text(item.userName),
-                subtitle: Text('Jumlah: ${currencyFormatter.format(item.amount)}\nPada: $formattedDate'),
-                trailing: Text(
-                  isApproved ? 'Disetujui' : 'Ditolak',
-                  style: TextStyle(
-                    color: isApproved ? Colors.green : Colors.red,
-                    fontWeight: FontWeight.bold
-                  ),
-                ),
-              ),
-            );
-          },
-        );
-      },
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 16.0),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          IconButton(
+            icon: const Icon(Icons.chevron_left),
+            onPressed: currentPage > 1 ? () => onPageChanged(currentPage - 1) : null,
+          ),
+          Text('Halaman $currentPage dari $totalPages'),
+          IconButton(
+            icon: const Icon(Icons.chevron_right),
+            onPressed: currentPage < totalPages ? () => onPageChanged(currentPage + 1) : null,
+          ),
+        ],
+      ),
     );
   }
 }

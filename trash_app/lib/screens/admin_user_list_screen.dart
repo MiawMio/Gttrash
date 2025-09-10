@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:intl/intl.dart'; // Import intl package
 import 'package:trash_app/models/user_model.dart';
 import '../constants/app_colors.dart';
 
@@ -32,6 +33,9 @@ class _AdminUserListScreenState extends State<AdminUserListScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // Buat formatter untuk mata uang
+    final currencyFormatter = NumberFormat.currency(locale: 'id_ID', symbol: 'Rp ', decimalDigits: 0);
+
     return Scaffold(
       backgroundColor: AppColors.primaryGreen,
       body: SafeArea(
@@ -70,7 +74,7 @@ class _AdminUserListScreenState extends State<AdminUserListScreen> {
                     return Center(child: Text('Error: ${snapshot.error}', style: const TextStyle(color: Colors.white)));
                   }
                   if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                    return const Center(child: Text('Tidak ada pengguna terdaftar.', style: TextStyle(color: Colors.white)));
+                    return const Center(child: Text('Tidak ada pengguna terdaftar.', style: const TextStyle(color: Colors.white)));
                   }
 
                   final userList = snapshot.data!;
@@ -87,13 +91,16 @@ class _AdminUserListScreenState extends State<AdminUserListScreen> {
                             backgroundColor: AppColors.primaryGreen,
                             child: Text(user.name.isNotEmpty ? user.name[0].toUpperCase() : 'U', style: const TextStyle(color: Colors.white)),
                           ),
-                          title: Text(user.name),
-                          subtitle: Text(user.email),
+                          title: Text(user.name, style: const TextStyle(fontWeight: FontWeight.bold)),
+                          // Tampilkan email dan role di subtitle
+                          subtitle: Text("${user.email} (${user.role})"),
+                          // Tampilkan saldo di trailing
                           trailing: Text(
-                            user.role,
-                            style: TextStyle(
-                              color: user.role == 'admin' ? Colors.red : Colors.green,
-                              fontWeight: FontWeight.bold
+                            currencyFormatter.format(user.balance),
+                            style: const TextStyle(
+                              color: AppColors.primaryGreen,
+                              fontWeight: FontWeight.w600,
+                              fontSize: 14,
                             ),
                           ),
                         ),

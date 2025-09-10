@@ -16,7 +16,6 @@ class ProfileScreen extends StatefulWidget {
 class _ProfileScreenState extends State<ProfileScreen> {
   final ProfileService _profileService = ProfileService();
 
-  // Fungsi _logout yang diubah untuk menampilkan dialog konfirmasi
   Future<void> _logout(BuildContext context) async {
     final bool? confirmLogout = await showDialog<bool>(
       context: context,
@@ -27,13 +26,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
           actions: <Widget>[
             TextButton(
               onPressed: () {
-                Navigator.of(dialogContext).pop(false); // Tidak jadi logout
+                Navigator.of(dialogContext).pop(false);
               },
               child: const Text('Batal'),
             ),
             TextButton(
               onPressed: () {
-                Navigator.of(dialogContext).pop(true); // Konfirmasi logout
+                Navigator.of(dialogContext).pop(true);
               },
               child: const Text('Keluar'),
             ),
@@ -42,7 +41,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       },
     );
 
-    if (confirmLogout == true) { // Hanya jika pengguna mengkonfirmasi logout
+    if (confirmLogout == true) {
       try {
         await AuthService().signOut();
         if (context.mounted) {
@@ -77,7 +76,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
               padding: const EdgeInsets.all(20),
               child: Row(
                 children: [
-                  // Back button
                   GestureDetector(
                     onTap: () => Navigator.pop(context),
                     child: Container(
@@ -95,7 +93,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     ),
                   ),
                   const SizedBox(width: 12),
-                  // Logo
                   Container(
                     width: 40,
                     height: 40,
@@ -110,7 +107,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     ),
                   ),
                   const SizedBox(width: 12),
-                  // Profile title
                   const Text(
                     'Profile',
                     style: TextStyle(
@@ -123,151 +119,183 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ),
             ),
 
-            const SizedBox(height: 40),
-
-            // Profile Card with real-time updates
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 30),
+            // <<< KONTEN UTAMA YANG DIMODIFIKASI >>>
+            Expanded(
               child: StreamBuilder<Map<String, dynamic>>(
                 stream: _profileService.getProfileStream(),
                 builder: (context, snapshot) {
+                  // Jika data belum siap, tampilkan loading indicator
+                  if (!snapshot.hasData) {
+                    return const Center(child: CircularProgressIndicator(color: Colors.white));
+                  }
+
                   final profileData = snapshot.data ?? {};
                   final photoUrl = profileData['photoUrl'];
                   final name = profileData['name'] ?? 'Masukan Nama';
                   final email = profileData['email'] ?? 'email@example.com';
+                  final role = profileData['role'] ?? 'user'; // Ambil data role
 
-                  return Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.all(24),
-                    decoration: BoxDecoration(
-                      color: AppColors.white.withOpacity(0.95),
-                      borderRadius: BorderRadius.circular(25),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.15),
-                          blurRadius: 20,
-                          offset: const Offset(0, 8),
-                        ),
-                      ],
-                    ),
-                    child: Column(
-                      children: [
-                        // Profile Image
-                        Container(
-                          width: 100,
-                          height: 100,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            border: Border.all(
-                              color: AppColors.primaryGreen,
-                              width: 3,
+                  return Column(
+                    children: [
+                      const SizedBox(height: 20),
+
+                      // <<< WIDGET BARU: TAMPILKAN JIKA ROLE ADALAH ADMIN >>>
+                      if (role == 'admin')
+                        const Padding(
+                          padding: EdgeInsets.symmetric(horizontal: 30),
+                          child: Text(
+                            'Selamat datang, Admin',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 22,
+                              fontWeight: FontWeight.bold,
                             ),
+                          ),
+                        ),
+                      
+                      const SizedBox(height: 20),
+
+                      // Profile Card
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 30),
+                        child: Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.all(24),
+                          decoration: BoxDecoration(
+                            color: AppColors.white.withOpacity(0.95),
+                            borderRadius: BorderRadius.circular(25),
                             boxShadow: [
                               BoxShadow(
-                                color: Colors.black.withOpacity(0.2),
-                                blurRadius: 10,
-                                offset: const Offset(0, 5),
+                                color: Colors.black.withOpacity(0.15),
+                                blurRadius: 20,
+                                offset: const Offset(0, 8),
                               ),
                             ],
                           ),
-                          child: ClipOval(
-                            child: photoUrl != null
-                                ? (photoUrl.startsWith('http')
-                                    ? Image.network(
-                                        photoUrl,
-                                        fit: BoxFit.cover,
-                                        errorBuilder: (context, error, stackTrace) {
-                                          return Container(
-                                            color: Colors.purple.shade100,
-                                            child: const Icon(
-                                              Icons.person,
-                                              size: 50,
-                                              color: Colors.purple,
-                                            ),
-                                          );
-                                        },
-                                      )
-                                    : Image.file(
-                                        File(photoUrl),
-                                        fit: BoxFit.cover,
-                                        errorBuilder: (context, error, stackTrace) {
-                                          return Container(
-                                            color: Colors.purple.shade100,
-                                            child: const Icon(
-                                              Icons.person,
-                                              size: 50,
-                                              color: Colors.purple,
-                                            ),
-                                          );
-                                        },
-                                      ))
-                                : Container(
-                                    color: Colors.purple.shade100,
-                                    child: const Icon(
-                                      Icons.person,
-                                      size: 50,
-                                      color: Colors.purple,
+                          child: Column(
+                            children: [
+                              // Profile Image
+                              Container(
+                                width: 100,
+                                height: 100,
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  border: Border.all(
+                                    color: AppColors.primaryGreen,
+                                    width: 3,
+                                  ),
+                                ),
+                                child: ClipOval(
+                                  child: photoUrl != null
+                                      ? (photoUrl.startsWith('http')
+                                          ? Image.network(
+                                              photoUrl,
+                                              fit: BoxFit.cover,
+                                              errorBuilder: (context, error, stackTrace) {
+                                                return Container(
+                                                  color: Colors.purple.shade100,
+                                                  child: const Icon(Icons.person, size: 50, color: Colors.purple),
+                                                );
+                                              },
+                                            )
+                                          : Image.file(
+                                              File(photoUrl),
+                                              fit: BoxFit.cover,
+                                              errorBuilder: (context, error, stackTrace) {
+                                                return Container(
+                                                  color: Colors.purple.shade100,
+                                                  child: const Icon(Icons.person, size: 50, color: Colors.purple),
+                                                );
+                                              },
+                                            ))
+                                      : Container(
+                                          color: Colors.purple.shade100,
+                                          child: const Icon(Icons.person, size: 50, color: Colors.purple),
+                                        ),
+                                ),
+                              ),
+
+                              const SizedBox(height: 16),
+
+                              // Name
+                              Text(
+                                name,
+                                style: const TextStyle(
+                                  color: AppColors.black,
+                                  fontSize: 24,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                                textAlign: TextAlign.center,
+                              ),
+
+                              const SizedBox(height: 8),
+
+                              // Email
+                              Text(
+                                email,
+                                style: TextStyle(
+                                  color: AppColors.grey.withOpacity(0.8),
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w400,
+                                ),
+                                textAlign: TextAlign.center,
+                              ),
+
+                              const SizedBox(height: 20),
+
+                              // Edit Button
+                              GestureDetector(
+                                onTap: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(builder: (_) => const EditProfileScreen()),
+                                  );
+                                },
+                                child: Container(
+                                  width: double.infinity,
+                                  padding: const EdgeInsets.symmetric(vertical: 16),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFFB8E6C1),
+                                    borderRadius: BorderRadius.circular(15),
+                                  ),
+                                  child: const Center(
+                                    child: Text(
+                                      'EDIT',
+                                      style: TextStyle(
+                                        color: AppColors.black,
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.w600,
+                                        letterSpacing: 1.2,
+                                      ),
                                     ),
                                   ),
+                                ),
+                              ),
+                            ],
                           ),
                         ),
+                      ),
+                      
+                      const SizedBox(height: 30),
 
-                        const SizedBox(height: 16),
-
-                        // Name
-                        Text(
-                          name,
-                          style: const TextStyle(
-                            color: AppColors.black,
-                            fontSize: 24,
-                            fontWeight: FontWeight.bold,
-                          ),
-                          textAlign: TextAlign.center,
-                        ),
-
-                        const SizedBox(height: 8),
-
-                        // Email
-                        Text(
-                          email,
-                          style: TextStyle(
-                            color: AppColors.grey.withOpacity(0.8),
-                            fontSize: 16,
-                            fontWeight: FontWeight.w400,
-                          ),
-                          textAlign: TextAlign.center,
-                        ),
-
-                        const SizedBox(height: 20),
-
-                        // Edit Button
-                        GestureDetector(
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(builder: (_) => const EditProfileScreen()),
-                            );
-                          },
+                      // Keluar Button
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 60),
+                        child: GestureDetector(
+                          onTap: () => _logout(context),
                           child: Container(
                             width: double.infinity,
                             padding: const EdgeInsets.symmetric(vertical: 16),
                             decoration: BoxDecoration(
                               color: const Color(0xFFB8E6C1),
-                              borderRadius: BorderRadius.circular(15),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.black.withOpacity(0.1),
-                                  blurRadius: 8,
-                                  offset: const Offset(0, 3),
-                                ),
-                              ],
+                              borderRadius: BorderRadius.circular(20),
                             ),
                             child: const Center(
                               child: Text(
-                                'EDIT',
+                                'KELUAR',
                                 style: TextStyle(
                                   color: AppColors.black,
-                                  fontSize: 16,
+                                  fontSize: 18,
                                   fontWeight: FontWeight.w600,
                                   letterSpacing: 1.2,
                                 ),
@@ -275,50 +303,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             ),
                           ),
                         ),
-                      ],
-                    ),
+                      ),
+                      const Spacer(),
+                    ],
                   );
                 },
               ),
             ),
-
-            const SizedBox(height: 30),
-
-            // Keluar Button
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 60),
-              child: GestureDetector(
-                onTap: () => _logout(context), // Memanggil fungsi _logout yang kini memiliki dialog
-                child: Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFB8E6C1),
-                    borderRadius: BorderRadius.circular(20),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.15),
-                        blurRadius: 10,
-                        offset: const Offset(0, 5),
-                      ),
-                    ],
-                  ),
-                  child: const Center(
-                    child: Text(
-                      'KELUAR',
-                      style: TextStyle(
-                        color: AppColors.black,
-                        fontSize: 18,
-                        fontWeight: FontWeight.w600,
-                        letterSpacing: 1.2,
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ),
-
-            const Spacer(),
           ],
         ),
       ),
