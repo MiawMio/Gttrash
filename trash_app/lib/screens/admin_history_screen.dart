@@ -1,10 +1,11 @@
+import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
 import '../constants/app_colors.dart';
 
-// Model untuk data riwayat penyetujuan (tetap sama)
+// Model SubmissionHistory (tetap sama)
 class SubmissionHistory {
   final String userName;
   final String categoryName;
@@ -43,7 +44,7 @@ class SubmissionHistory {
   }
 }
 
-// Model untuk data riwayat penarikan (tetap sama)
+// Model WithdrawalHistory (tetap sama)
 class WithdrawalHistory {
   final String userName;
   final double amount;
@@ -89,6 +90,11 @@ class AdminHistoryScreen extends StatefulWidget {
 class _AdminHistoryScreenState extends State<AdminHistoryScreen> with SingleTickerProviderStateMixin {
   late TabController _tabController;
 
+  final TextEditingController _searchController = TextEditingController();
+  Timer? _debounce;
+  String _searchQuery = '';
+  DateTime? _selectedDate;
+
   bool _isLoadingSubmissions = true;
   bool _isLoadingWithdrawals = true;
   List<SubmissionHistory> _submissionHistory = [];
@@ -102,65 +108,106 @@ class _AdminHistoryScreenState extends State<AdminHistoryScreen> with SingleTick
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
-    _fetchSubmissionHistory(1);
-    _fetchWithdrawalHistory(1);
+    _reloadData();
+    _searchController.addListener(_onSearchChanged);
   }
 
   @override
   void dispose() {
     _tabController.dispose();
+    _searchController.removeListener(_onSearchChanged);
+    _searchController.dispose();
+    _debounce?.cancel();
     super.dispose();
   }
 
-  Future<void> _fetchSubmissionHistory(int page) async {
-    setState(() {
-      _isLoadingSubmissions = true;
+  void _onSearchChanged() {
+    if (_debounce?.isActive ?? false) _debounce?.cancel();
+    _debounce = Timer(const Duration(milliseconds: 500), () {
+      if (_searchQuery != _searchController.text) {
+        setState(() {
+          _searchQuery = _searchController.text;
+        });
+        _reloadData(resetPage: true);
+      }
     });
+  }
+  
+  void _reloadData({bool resetPage = false}) {
+    if (resetPage) {
+      _submissionCurrentPage = 1;
+      _withdrawalCurrentPage = 1;
+    }
+    _fetchSubmissionHistory(_submissionCurrentPage, _searchQuery, _selectedDate);
+    _fetchWithdrawalHistory(_withdrawalCurrentPage, _searchQuery, _selectedDate);
+  }
+
+  Future<void> _selectDate(BuildContext context) async {
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: _selectedDate ?? DateTime.now(),
+      firstDate: DateTime(2020),
+      lastDate: DateTime.now(),
+    );
+    if (picked != null && picked != _selectedDate) {
+      setState(() {
+        _selectedDate = picked;
+      });
+      _reloadData(resetPage: true);
+    }
+  }
+
+  void _clearDateFilter() {
+    setState(() {
+      _selectedDate = null;
+    });
+    _reloadData(resetPage: true);
+  }
+
+  Future<void> _fetchSubmissionHistory(int page, String search, DateTime? date) async {
+    setState(() => _isLoadingSubmissions = true);
     try {
-      final response = await http.get(Uri.parse('https://trash-api-azure.vercel.app/api/history?page=$page&limit=8'));
+      String dateQuery = date != null ? '&date=${DateFormat('yyyy-MM-dd').format(date)}' : '';
+      final url = 'https://trash-api-azure.vercel.app/api/history?page=$page&limit=8&search=$search$dateQuery';
+      final response = await http.get(Uri.parse(url));
+      
       if (response.statusCode == 200) {
         final body = jsonDecode(response.body);
         final List<dynamic> data = body['data'];
         setState(() {
           _submissionHistory = data.map((item) => SubmissionHistory.fromJson(item)).toList();
-          _submissionTotalPages = body['totalPages'];
-          _submissionCurrentPage = body['currentPage'];
+          _submissionTotalPages = body['totalPages'] ?? 1;
+          _submissionCurrentPage = body['currentPage'] ?? 1;
         });
       } else {
         throw Exception('Failed to load submission history');
       }
     } finally {
-      if(mounted) {
-        setState(() {
-          _isLoadingSubmissions = false;
-        });
-      }
+      if(mounted) setState(() => _isLoadingSubmissions = false);
     }
   }
 
-  Future<void> _fetchWithdrawalHistory(int page) async {
-    setState(() {
-      _isLoadingWithdrawals = true;
-    });
+  Future<void> _fetchWithdrawalHistory(int page, String search, DateTime? date) async {
+    setState(() => _isLoadingWithdrawals = true);
     try {
-      final response = await http.get(Uri.parse('https://trash-api-azure.vercel.app/api/withdrawal-history?page=$page&limit=8'));
+      // <<< INI BAGIAN YANG DIPERBAIKI >>>
+      String dateQuery = date != null ? '&date=${DateFormat('yyyy-MM-dd').format(date)}' : '';
+      final url = 'https://trash-api-azure.vercel.app/api/withdrawal-history?page=$page&limit=8&search=$search$dateQuery';
+      final response = await http.get(Uri.parse(url));
+      
       if (response.statusCode == 200) {
         final body = jsonDecode(response.body);
         final List<dynamic> data = body['data'];
         setState(() {
           _withdrawalHistory = data.map((item) => WithdrawalHistory.fromJson(item)).toList();
-          _withdrawalTotalPages = body['totalPages'];
-          _withdrawalCurrentPage = body['currentPage'];
+          _withdrawalTotalPages = body['totalPages'] ?? 1;
+          _withdrawalCurrentPage = body['currentPage'] ?? 1;
         });
       } else {
         throw Exception('Failed to load withdrawal history');
       }
     } finally {
-      if(mounted) {
-        setState(() {
-          _isLoadingWithdrawals = false;
-        });
-      }
+      if(mounted) setState(() => _isLoadingWithdrawals = false);
     }
   }
 
@@ -186,39 +233,71 @@ class _AdminHistoryScreenState extends State<AdminHistoryScreen> with SingleTick
           ],
         ),
       ),
-      body: TabBarView(
-        controller: _tabController,
+      body: Column(
         children: [
-          _buildSubmissionHistoryList(),
-          _buildWithdrawalHistoryList(),
+          Container(
+            color: Colors.white,
+            padding: const EdgeInsets.all(8.0),
+            child: Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    controller: _searchController,
+                    decoration: InputDecoration(
+                      hintText: 'Cari berdasarkan nama...',
+                      prefixIcon: const Icon(Icons.search),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12.0),
+                        borderSide: BorderSide.none,
+                      ),
+                      filled: true,
+                      fillColor: Colors.grey[200],
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                IconButton(
+                  icon: Icon(Icons.calendar_today, color: _selectedDate != null ? AppColors.primaryGreen : Colors.grey),
+                  onPressed: () => _selectDate(context),
+                ),
+                if (_selectedDate != null)
+                  IconButton(
+                    icon: const Icon(Icons.clear, color: Colors.red),
+                    onPressed: _clearDateFilter,
+                  )
+              ],
+            ),
+          ),
+          Expanded(
+            child: TabBarView(
+              controller: _tabController,
+              children: [
+                _buildSubmissionHistoryList(),
+                _buildWithdrawalHistoryList(),
+              ],
+            ),
+          ),
         ],
       ),
     );
   }
 
-  // <<< KODE YANG DIPERBAIKI ADA DI SINI >>>
   Widget _buildSubmissionHistoryList() {
-    if (_isLoadingSubmissions) {
-      return const Center(child: CircularProgressIndicator());
-    }
-    if (_submissionHistory.isEmpty) {
-      return const Center(child: Text('Belum ada riwayat penyetujuan.'));
-    }
+    if (_isLoadingSubmissions) return const Center(child: CircularProgressIndicator());
+    if (_submissionHistory.isEmpty) return const Center(child: Text('Tidak ada data yang cocok.'));
 
     return Column(
       children: [
         Expanded(
           child: ListView.builder(
-            padding: const EdgeInsets.all(10),
+            padding: const EdgeInsets.fromLTRB(10, 10, 10, 0),
             itemCount: _submissionHistory.length,
             itemBuilder: (context, index) {
               final item = _submissionHistory[index];
               final isApproved = item.status == 'approved';
               final formattedDate = DateFormat('dd MMM yyyy, HH:mm').format(item.processedAt);
-              
-              // Ini adalah bagian Card yang sebelumnya hilang
               return Card(
-                margin: const EdgeInsets.symmetric(vertical: 8),
+                margin: const EdgeInsets.only(bottom: 8),
                 child: ListTile(
                   leading: Icon(
                     isApproved ? Icons.check_circle : Icons.cancel,
@@ -240,9 +319,7 @@ class _AdminHistoryScreenState extends State<AdminHistoryScreen> with SingleTick
         _buildPaginationControls(
           currentPage: _submissionCurrentPage,
           totalPages: _submissionTotalPages,
-          onPageChanged: (page) {
-            _fetchSubmissionHistory(page);
-          },
+          onPageChanged: (page) => _fetchSubmissionHistory(page, _searchQuery, _selectedDate),
         ),
       ],
     );
@@ -250,24 +327,21 @@ class _AdminHistoryScreenState extends State<AdminHistoryScreen> with SingleTick
   
   Widget _buildWithdrawalHistoryList() {
     final currencyFormatter = NumberFormat.currency(locale: 'id_ID', symbol: 'Rp ', decimalDigits: 0);
-    if (_isLoadingWithdrawals) {
-      return const Center(child: CircularProgressIndicator());
-    }
-    if (_withdrawalHistory.isEmpty) {
-      return const Center(child: Text('Belum ada riwayat penarikan.'));
-    }
+    if (_isLoadingWithdrawals) return const Center(child: CircularProgressIndicator());
+    if (_withdrawalHistory.isEmpty) return const Center(child: Text('Tidak ada data yang cocok.'));
+    
     return Column(
       children: [
         Expanded(
           child: ListView.builder(
-            padding: const EdgeInsets.all(10),
+            padding: const EdgeInsets.fromLTRB(10, 10, 10, 0),
             itemCount: _withdrawalHistory.length,
             itemBuilder: (context, index) {
               final item = _withdrawalHistory[index];
               final isApproved = item.status == 'approved';
               final formattedDate = DateFormat('dd MMM yyyy, HH:mm').format(item.processedAt);
               return Card(
-                margin: const EdgeInsets.symmetric(vertical: 8),
+                margin: const EdgeInsets.only(bottom: 8),
                 child: ListTile(
                   leading: Icon(
                     isApproved ? Icons.check_circle : Icons.cancel,
@@ -290,9 +364,7 @@ class _AdminHistoryScreenState extends State<AdminHistoryScreen> with SingleTick
         _buildPaginationControls(
           currentPage: _withdrawalCurrentPage,
           totalPages: _withdrawalTotalPages,
-          onPageChanged: (page) {
-            _fetchWithdrawalHistory(page);
-          },
+          onPageChanged: (page) => _fetchWithdrawalHistory(page, _searchQuery, _selectedDate),
         ),
       ],
     );
@@ -304,9 +376,8 @@ class _AdminHistoryScreenState extends State<AdminHistoryScreen> with SingleTick
     required ValueChanged<int> onPageChanged,
   }) {
     if (totalPages <= 1) return const SizedBox.shrink();
-
     return Container(
-      padding: const EdgeInsets.symmetric(vertical: 16.0),
+      padding: const EdgeInsets.symmetric(vertical: 10.0),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
