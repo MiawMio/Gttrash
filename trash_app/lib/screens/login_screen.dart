@@ -221,7 +221,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           const Padding(
                             padding: EdgeInsets.symmetric(horizontal: 16),
                             child: Text(
-                              'OR',
+                              'Atau',
                               style: TextStyle(
                                 color: AppColors.grey,
                                 fontSize: 14,
@@ -259,7 +259,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             },
                           ),
                           label: Text(
-                            _isLoading ? 'Signing in...' : 'Continue with Google',
+                            _isLoading ? 'Signing in...' : 'Lanjutkan Dengan Google',
                             style: const TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.w600,

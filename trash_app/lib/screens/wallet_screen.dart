@@ -7,13 +7,11 @@ import 'package:flutter/services.dart';
 import 'package:trash_app/services/auth_service.dart';
 import '../constants/app_colors.dart';
 
-// Model untuk Wallet dan Transaksi
+// Model untuk Wallet dan Transaksi (Tetap sama)
 class Wallet {
   final double balance;
   final List<Transaction> transactions;
-
   Wallet({required this.balance, required this.transactions});
-
   factory Wallet.fromJson(Map<String, dynamic> json) {
     var txList = json['transactions'] as List;
     List<Transaction> transactions = txList.map((i) => Transaction.fromJson(i)).toList();
@@ -29,23 +27,50 @@ class Transaction {
   final double amount;
   final DateTime createdAt;
   final String type;
-
-  Transaction({
-    required this.description,
-    required this.amount,
-    required this.createdAt,
-    required this.type,
-  });
-
+  Transaction({required this.description, required this.amount, required this.createdAt, required this.type});
   factory Transaction.fromJson(Map<String, dynamic> json) {
-    // Parsing waktu dari string ISO 8601 (UTC)
     final utcTime = DateTime.parse(json['created_at']);
     return Transaction(
       description: json['description'] ?? 'No description',
       amount: (json['amount'] as num).toDouble(),
-      // Konversi waktu UTC ke waktu lokal perangkat
       createdAt: utcTime.toLocal(),
       type: json['type'] ?? 'credit',
+    );
+  }
+}
+
+// <<< MODEL BARU UNTUK PENGAJUAN PENDING >>>
+class PendingSubmission {
+  final String categoryName;
+  final double weight;
+  final DateTime createdAt;
+  final String status;
+
+  PendingSubmission({
+    required this.categoryName,
+    required this.weight,
+    required this.createdAt,
+    required this.status,
+  });
+
+  factory PendingSubmission.fromJson(Map<String, dynamic> json) {
+    DateTime createdAtDate;
+    final createdAtData = json['created_at'];
+
+    if (createdAtData is Map<String, dynamic> && createdAtData.containsKey('_seconds')) {
+      final seconds = createdAtData['_seconds'] as int;
+      createdAtDate = DateTime.fromMillisecondsSinceEpoch(seconds * 1000);
+    } else if (createdAtData is String) {
+      createdAtDate = DateTime.parse(createdAtData);
+    } else {
+      createdAtDate = DateTime.now();
+    }
+
+    return PendingSubmission(
+      categoryName: json['category_name'] ?? 'No Category',
+      weight: (json['weight_in_grams'] as num).toDouble(),
+      createdAt: createdAtDate.toLocal(),
+      status: json['status'] ?? 'pending',
     );
   }
 }
@@ -61,18 +86,20 @@ class WalletScreen extends StatefulWidget {
 class _WalletScreenState extends State<WalletScreen> {
   final AuthService _authService = AuthService();
   Future<Wallet>? _walletFuture;
+  Future<List<PendingSubmission>>? _pendingSubmissionsFuture; // Future baru
 
   @override
   void initState() {
     super.initState();
-    _loadWalletData();
+    _loadData();
   }
 
-  void _loadWalletData() {
+  void _loadData() {
     final userId = _authService.currentUser?.uid;
     if (userId != null) {
       setState(() {
         _walletFuture = _fetchWallet(userId);
+        _pendingSubmissionsFuture = _fetchPendingSubmissions(userId); // Panggil fungsi baru
       });
     }
   }
@@ -90,6 +117,18 @@ class _WalletScreenState extends State<WalletScreen> {
     throw Exception('Failed to load wallet data: ${response.body}');
   }
 
+  // <<< FUNGSI BARU UNTUK MENGAMBIL DATA PENDING >>>
+  Future<List<PendingSubmission>> _fetchPendingSubmissions(String userId) async {
+    final url = Uri.parse('https://trash-api-azure.vercel.app/api/pending-submissions?userId=$userId');
+    final response = await http.get(url);
+    if (response.statusCode == 200) {
+      List<dynamic> body = jsonDecode(response.body);
+      return body.map((item) => PendingSubmission.fromJson(item)).toList();
+    } else {
+      throw Exception('Failed to load pending submissions');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final currencyFormatter = NumberFormat.currency(locale: 'id_ID', symbol: 'Rp ', decimalDigits: 0);
@@ -99,6 +138,7 @@ class _WalletScreenState extends State<WalletScreen> {
       body: SafeArea(
         child: Column(
           children: [
+            // Header (tetap sama)
             Padding(
               padding: const EdgeInsets.all(20),
               child: Row(
@@ -114,28 +154,27 @@ class _WalletScreenState extends State<WalletScreen> {
                   const SizedBox(width: 12),
                   const Text('Dompetku', style: TextStyle(color: AppColors.white, fontSize: 24, fontWeight: FontWeight.w600)),
                   const Spacer(),
-                  IconButton(icon: const Icon(Icons.refresh, color: Colors.white), onPressed: _loadWalletData)
+                  IconButton(icon: const Icon(Icons.refresh, color: Colors.white), onPressed: _loadData)
                 ],
               ),
             ),
+            
+            // Tampilan utama
             Expanded(
               child: FutureBuilder<Wallet>(
                 future: _walletFuture,
-                builder: (context, snapshot) {
-                  if (snapshot.connectionState == ConnectionState.waiting) {
+                builder: (context, walletSnapshot) {
+                  if (walletSnapshot.connectionState == ConnectionState.waiting) {
                     return const Center(child: CircularProgressIndicator(color: Colors.white));
                   }
-                  if (snapshot.hasError) {
-                    return Center(child: Text('Error: ${snapshot.error}', style: const TextStyle(color: Colors.white)));
+                  if (walletSnapshot.hasError) {
+                    return Center(child: Text('Error: ${walletSnapshot.error}', style: const TextStyle(color: Colors.white)));
                   }
-                  if (!snapshot.hasData) {
-                    return const Center(child: Text('Tidak dapat memuat data dompet.', style: TextStyle(color: Colors.white)));
-                  }
-
-                  final wallet = snapshot.data!;
+                  final wallet = walletSnapshot.data ?? Wallet(balance: 0, transactions: []);
 
                   return Column(
                     children: [
+                      // Tampilan Saldo (tetap sama)
                       Container(
                         margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
                         padding: const EdgeInsets.all(24),
@@ -149,15 +188,7 @@ class _WalletScreenState extends State<WalletScreen> {
                           children: [
                             const Text('Total Saldo', style: TextStyle(color: Colors.white, fontSize: 16)),
                             const SizedBox(height: 12),
-                            GestureDetector(
-                              onTap: () {
-                                Clipboard.setData(ClipboardData(text: wallet.balance.toStringAsFixed(0)));
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(content: Text('Saldo disalin ke clipboard')),
-                                );
-                              },
-                              child: Text(currencyFormatter.format(wallet.balance), style: const TextStyle(color: Colors.white, fontSize: 32, fontWeight: FontWeight.bold)),
-                            ),
+                            Text(currencyFormatter.format(wallet.balance), style: const TextStyle(color: Colors.white, fontSize: 32, fontWeight: FontWeight.bold)),
                             const SizedBox(height: 20),
                             SizedBox(
                               width: double.infinity,
@@ -168,36 +199,79 @@ class _WalletScreenState extends State<WalletScreen> {
                                   Navigator.push(
                                     context,
                                     MaterialPageRoute(builder: (_) => RequestWithdrawalScreen(currentBalance: wallet.balance)),
-                                  ).then((_) => _loadWalletData());
+                                  ).then((_) => _loadData());
                                 } : null,
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: Colors.white,
-                                  foregroundColor: AppColors.primaryGreen
-                                ),
+                                style: ElevatedButton.styleFrom(backgroundColor: Colors.white, foregroundColor: AppColors.primaryGreen),
                               ),
                             ),
                           ],
                         ),
                       ),
+                      
+                      // Judul Riwayat
                       const Padding(
                         padding: EdgeInsets.symmetric(horizontal: 20),
                         child: Row(
                           children: [
                             Icon(Icons.history, color: Colors.white),
                             SizedBox(width: 8),
-                            Text('Riwayat Transaksi', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
+                            Text('Riwayat', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
                           ],
                         ),
                       ),
+                      
+                      // <<< KONTEN RIWAYAT YANG DIMODIFIKASI >>>
                       Expanded(
                         child: Container(
                           margin: const EdgeInsets.fromLTRB(20, 20, 20, 0),
-                          child: wallet.transactions.isEmpty
-                              ? const Center(child: Text("Belum ada transaksi.", style: TextStyle(color: Colors.white70)))
-                              : ListView.builder(
-                                  itemCount: wallet.transactions.length,
-                                  itemBuilder: (context, index) {
-                                    final tx = wallet.transactions[index];
+                          child: FutureBuilder<List<PendingSubmission>>(
+                            future: _pendingSubmissionsFuture,
+                            builder: (context, pendingSnapshot) {
+                              if (pendingSnapshot.connectionState == ConnectionState.waiting) {
+                                return const Center(child: CircularProgressIndicator());
+                              }
+                              
+                              final pendingList = pendingSnapshot.data ?? [];
+                              final transactionList = wallet.transactions;
+
+                              if (pendingList.isEmpty && transactionList.isEmpty) {
+                                return const Center(child: Text("Belum ada riwayat.", style: TextStyle(color: Colors.white70)));
+                              }
+                              
+                              // Gabungkan data pending dan transaksi, lalu urutkan berdasarkan tanggal
+                              final combinedList = [
+                                ...pendingList,
+                                ...transactionList,
+                              ];
+                              combinedList.sort((a, b) {
+                                DateTime dateA = a is PendingSubmission ? a.createdAt : (a as Transaction).createdAt;
+                                DateTime dateB = b is PendingSubmission ? b.createdAt : (b as Transaction).createdAt;
+                                return dateB.compareTo(dateA); // Terbaru di atas
+                              });
+
+                              return ListView.builder(
+                                itemCount: combinedList.length,
+                                itemBuilder: (context, index) {
+                                  final item = combinedList[index];
+
+                                  if (item is PendingSubmission) {
+                                    // Tampilan untuk item PENDING
+                                    return Card(
+                                      color: Colors.yellow[100],
+                                      margin: const EdgeInsets.only(bottom: 12),
+                                      child: ListTile(
+                                        leading: const Icon(Icons.hourglass_top, color: Colors.orange),
+                                        title: Text(item.categoryName, style: const TextStyle(fontWeight: FontWeight.bold)),
+                                        subtitle: Text('${item.weight} gram'),
+                                        trailing: const Text(
+                                          'Pending',
+                                          style: TextStyle(color: Colors.orange, fontWeight: FontWeight.bold),
+                                        ),
+                                      ),
+                                    );
+                                  } else if (item is Transaction) {
+                                    // Tampilan untuk TRANSAKSI (yang sudah ada)
+                                    final tx = item;
                                     final isCredit = tx.type == 'credit';
                                     return Card(
                                       margin: const EdgeInsets.only(bottom: 12),
@@ -205,17 +279,18 @@ class _WalletScreenState extends State<WalletScreen> {
                                         leading: Icon(isCredit ? Icons.arrow_downward : Icons.arrow_upward, color: isCredit ? Colors.green : Colors.red),
                                         title: Text(tx.description, style: const TextStyle(fontWeight: FontWeight.bold)),
                                         subtitle: Text(DateFormat('dd MMM yyyy, HH:mm').format(tx.createdAt)),
-                                        trailing: Text( // <-- AWAL WIDGET TEXT
+                                        trailing: Text(
                                           '${isCredit ? '+' : '-'} ${currencyFormatter.format(tx.amount)}',
-                                          style: TextStyle(
-                                            color: isCredit ? Colors.green : Colors.red,
-                                            fontWeight: FontWeight.bold
-                                          ),
-                                        ), // <-- AKHIR WIDGET TEXT (Tanda kurung yang benar)
+                                          style: TextStyle(color: isCredit ? Colors.green : Colors.red, fontWeight: FontWeight.bold),
+                                        ),
                                       ),
                                     );
-                                  },
-                                ),
+                                  }
+                                  return const SizedBox.shrink(); // Fallback
+                                },
+                              );
+                            },
+                          ),
                         ),
                       ),
                     ],

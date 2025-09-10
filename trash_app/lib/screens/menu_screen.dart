@@ -87,7 +87,7 @@ class _MenuScreenState extends State<MenuScreen> {
                           _buildMenuItem(
                             icon: Icons.history,
                             iconColor: Colors.purple,
-                            title: 'History Penyetujuan',
+                            title: 'History',
                             backgroundColor: Colors.purple.shade100,
                             onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const AdminHistoryScreen())),
                           ),

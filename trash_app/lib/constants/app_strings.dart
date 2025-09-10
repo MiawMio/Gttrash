@@ -1,17 +1,17 @@
 class AppStrings {
   static const String appTitle = 'MyApp';
-  static const String login = 'Login';
-  static const String signIn = 'Sign in to continue.';
-  static const String name = 'NAME';
-  static const String password = 'PASSWORD';
-  static const String logIn = 'Log in';
-  static const String signupHere = 'Signup Here !';
-  static const String register = 'Register';
+  static const String login = 'Masuk';
+  static const String signIn = 'Masuk Untuk Melanjutkan.';
+  static const String name = 'NAMA';
+  static const String password = 'Sandi';
+  static const String logIn = 'Masuk';
+  static const String signupHere = 'Daftar Disini !';
+  static const String register = 'Daftar';
   static const String noAccount = 'Belum punya akun? ';
   static const String haveAccount = 'Sudah punya akun? ';
-  static const String loginFailed = 'Login gagal';
-  static const String registerFailed = 'Register gagal';
-  static const String registerSuccess = 'Register berhasil';
+  static const String loginFailed = 'Gagal Masuk';
+  static const String registerFailed = 'Gagal Mendaftar';
+  static const String registerSuccess = 'berhasil Mendaftar';
   static const String email = 'Email';
-  static const String confirmPassword = 'Konfirmasi Password';
+  static const String confirmPassword = 'Konfirmasi Sandi';
 }

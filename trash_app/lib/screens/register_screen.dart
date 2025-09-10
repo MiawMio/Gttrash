@@ -134,7 +134,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       
                       // Subtitle
                       const Text(
-                        'Create your account',
+                        'Silakan Buat Akun Kamu >_<',
                         style: TextStyle(
                           fontSize: 16,
                           color: AppColors.grey,
@@ -146,7 +146,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       // Name field
                       CustomTextField(
                         label: AppStrings.name,
-                        hintText: 'Enter your name',
+                        hintText: 'Masukkan Nama',
                         controller: _nameController,
                         validator: Validators.validateName,
                       ),
@@ -156,7 +156,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       // Email field
                       CustomTextField(
                         label: AppStrings.email,
-                        hintText: 'Enter your email',
+                        hintText: 'Masukkan email ',
                         controller: _emailController,
                         keyboardType: TextInputType.emailAddress,
                         validator: Validators.validateEmail,
